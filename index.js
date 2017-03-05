@@ -2,15 +2,12 @@ const electron = require("electron");
 let app = electron.app;
 let BrowserWindow = electron.BrowserWindow;
 let mainWindow = null;
-
 global.config = [
-    //__dirname + "/css/bootstrap.min.css",
-    __dirname + "/css/bootstrap.paper.min.css",
+    __dirname + "/css/bootstrap.flatty.min.css",
     __dirname + "/css/font-awesome.min.css",
     __dirname + "/js/bootstrap.min.js",
     __dirname + "/js/ColoCalc.js"
 ];
-
 app.on('window-all-closed', function() {
 
     if(process.platform != 'darwin') {
@@ -32,7 +29,7 @@ app.on('ready', function() {
     mainWindow.loadURL('file://' + __dirname + '/index.html');
 
     mainWindow.once("ready-to-show", function() { mainWindow.show(); });
-    // mainWindow.openDevTools();
+    mainWindow.openDevTools();
 
     mainWindow.on('closed', function() { mainWindow = null; });
 });
