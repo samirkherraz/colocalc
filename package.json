@@ -1,19 +1,26 @@
 {
   "name": "ColocCalc",
+  "description": "Une application pour mieux gérer vos dépenses entre colocataires",
   "author": "Samir KHERRAZ <samir.kherraz@outlook.fr>",
   "version": "1.0.0",
+  "repository": "https://github.com/samirkherraz/colocalc",
+  "keywords": [
+    "Colocataires",
+    "Dépenses",
+    "Gérer"
+  ],
   "devDependencies": {
     "electron-prebuilt": "^1.4.4"
   },
-  "license": "CC-0",
+  "license": "GPLv3",
   "main": "index.js",
-  "private": true,
+  "private": false,
 
   "scripts": {
-    "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron ."
   },
   "dependencies": {
     "jquery": "^3.1.1"
   }
+  
 }

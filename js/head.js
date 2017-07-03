@@ -26,9 +26,8 @@ function load(callback, i = 0)
             load(callback, i + 1);
         }
     };
-    
-    elem.onload = function() {
-            load(callback, i + 1);
-    };
+
+    elem.onload = function() { load(callback, i + 1); };
     document.getElementsByTagName('head')[0].appendChild(elem);
+    $("#loading-bar").animate({ "width" : i * 5 + "%" }, 50);
 }

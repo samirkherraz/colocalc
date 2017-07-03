@@ -1,8 +1,12 @@
 let Coloc = function(callback) {
-
-    this.DB_NAME = __dirname + "/data/default.db";
-    this.CFG_USERS = __dirname + "/data/default.u.cfg";
-    this.CFG_TYPES = __dirname + "/data/default.t.cfg";
+    let remote = require('electron').remote;
+    this.fs = require('fs');
+    this.data_dir = remote.getGlobal('DEFAULT_DIR');
+    this.database_dir = this.data_dir + "/db/";
+    this.config_dir = this.data_dir + "/cfg/";
+    this.DB_NAME = this.database_dir + "default.db";
+    this.CFG_USERS = this.config_dir + "default.u.cfg";
+    this.CFG_TYPES = this.config_dir + "default.t.cfg";
 
     this.users = new Array();
     this.types = new Array();
@@ -10,19 +14,79 @@ let Coloc = function(callback) {
 
     this.list = { th : $("#ListTableH"), tb : $("#ListTableB") };
 
-    this.fs = require('fs');
     this.modal = $("#modal");
     this.credits;
     this.creditsPanel = $("#creditsPanel");
+    $("#loading-bar").animate({ "width" : "50%" }, 50);
+
+    this.initDir();
+    $("#loading-bar").animate({ "width" : "60%" }, 50);
 
     this.readData();
+    $("#loading-bar").animate({ "width" : "70%" }, 50);
+
     this.refresh();
-    this.bindWndow();
-    callback();
+    $("#loading-bar").animate({ "width" : "80%" }, 50);
+
+    this.bindWindow();
+    $("#loading-bar").animate({ "width" : "90%" }, 50);
+
+    $("#loading-bar").animate({ "width" : "100%" }, 50, () => { callback(); });
 
 };
 
 // Builders
+
+Coloc.prototype.initDir = function() {
+
+    let coloc = this;
+
+    try {
+        let s = coloc.fs.accessSync(coloc.data_dir, coloc.fs.F_OK);
+    } catch(e) {
+
+        coloc.fs.mkdir(coloc.data_dir);
+        coloc.fs.mkdir(coloc.database_dir);
+        coloc.fs.mkdir(coloc.config_dir);
+
+        coloc.fs.writeFileSync(coloc.DB_NAME, JSON.stringify(new Array()), "UTF-8");
+        coloc.fs.writeFileSync(coloc.CFG_USERS, JSON.stringify(new Array()), "UTF-8");
+        coloc.fs.writeFileSync(coloc.CFG_TYPES, JSON.stringify(new Array()), "UTF-8");
+    }
+
+    try {
+        coloc.fs.accessSync(coloc.database_dir, coloc.fs.F_OK);
+    } catch(e) {
+        coloc.fs.mkdir(coloc.database_dir);
+        coloc.fs.writeFileSync(coloc.DB_NAME);
+    }
+
+    try {
+        coloc.fs.accessSync(coloc.config_dir, coloc.fs.F_OK);
+    } catch(e) {
+        coloc.fs.mkdir(coloc.config_dir);
+        coloc.fs.writeFileSync(coloc.CFG_USERS, JSON.stringify(new Array()), "UTF-8");
+        coloc.fs.writeFileSync(coloc.CFG_TYPES, JSON.stringify(new Array()), "UTF-8");
+    }
+
+    try {
+        coloc.fs.accessSync(coloc.DB_NAME, coloc.fs.F_OK);
+    } catch(e) {
+        coloc.fs.writeFileSync(coloc.DB_NAME, JSON.stringify(new Array()), "UTF-8");
+    }
+
+    try {
+        coloc.fs.accessSync(coloc.CFG_USERS, coloc.fs.F_OK);
+    } catch(e) {
+        coloc.fs.writeFileSync(coloc.CFG_USERS, JSON.stringify(new Array()), "UTF-8");
+    }
+
+    try {
+        coloc.fs.accessSync(coloc.CFG_TYPES, coloc.fs.F_OK);
+    } catch(e) {
+        coloc.fs.writeFileSync(coloc.CFG_TYPES, JSON.stringify(new Array()), "UTF-8");
+    }
+};
 
 Coloc.prototype.resetDB = function() {
 
@@ -51,12 +115,6 @@ Coloc.prototype.buildList = function() {
     elem += "<th>Type</th>";
     elem += "<th>Commentaires</th>";
     elem += "<th>Total</th>";
-
-    $(this.users).each(function() {
-        elem += "<th>" + this + " part</th>";
-        elem += "<th>" + this + " payed</th>";
-
-    });
     elem += "</tr>";
     $(this.list.th).html(elem);
 
@@ -72,10 +130,10 @@ Coloc.prototype.buildDepotForm = function() {
     $(modal).find(".modal-body").empty();
 
     elem = '<div class="form-group row">' +
-           '<div class="col-sm-5">' +
+           '<div class="col-sm-3">' +
            '<label for="date"><i class="fa fa-calendar"></i>  Date</label>' +
            '</div>' +
-           '<div class="col-sm-7">' +
+           '<div class="col-sm-9">' +
            '<input type="date" id="date" class="form-control" value="' + new Date().toISOString().substring(0, 10) +
            '"> ' +
            '</div>' +
@@ -83,29 +141,29 @@ Coloc.prototype.buildDepotForm = function() {
     $(modal).find(".modal-body").append(elem);
 
     elem = '<div class="form-group row">' +
-           '<div class="col-sm-5">' +
+           '<div class="col-sm-3">' +
            '<label for="total"><i class="fa fa-eur"></i>  Total</label>' +
            '</div>' +
-           '<div class="col-sm-7">' +
+           '<div class="col-sm-9">' +
            '<input type="number" id="total" placeholder="Exemple 80" class="form-control"> ' +
            '</div>' +
            '</div>';
     $(modal).find(".modal-body").append(elem);
     elem = '<div class="form-group row">' +
-           '<div class="col-sm-5">' +
+           '<div class="col-sm-3">' +
            '<label for="coms"><i class="fa fa-text"></i>  Commentaires</label>' +
            '</div>' +
-           '<div class="col-sm-7">' +
+           '<div class="col-sm-9">' +
            '<textarea id="coms" class="form-control"> </textarea>' +
            '</div>' +
            '</div>';
     $(modal).find(".modal-body").append(elem);
 
     elem = '<div class="form-group row">' +
-           '<div class="col-sm-5">' +
+           '<div class="col-sm-3">' +
            '<label for="from"><i class="fa fa-ticket"></i>  Payeur</label>' +
            '</div>' +
-           '<div class="col-sm-7">' +
+           '<div class="col-sm-9">' +
            ' <select class="form-control" id="from">';
     $(this.users).each(function(){ elem += '<option value="' + this + '">' + this });
     elem += '</select>' +
@@ -114,20 +172,30 @@ Coloc.prototype.buildDepotForm = function() {
 
     $(modal).find(".modal-body").append(elem);
 
+    tb = $("<tbody>");
     $(this.users).each(function() {
-        elem = '<div class="form-group row">' +
-               '<label class="col-sm-2"><i class="fa fa-user"></i>  ' + this + ' </label>' +
-               '<div class="col-sm-2">' +
-               '<label class="form-check-label"> Participe</label>' +
-               '<input class="form-check-input participate" type="checkbox" id="' + this + '">' +
-               '</div>' +
-               '</div>';
-        $(modal).find(".modal-body").append(elem)
 
-            elem = "<input type='hidden' id='id' value='-1'>";
-        $(modal).find(".modal-body").append(elem);
+        elem = '<tr>' +
+               '<td><i class="fa fa-user"></i>  ' + this + ' </td>' +
+               '<td>' +
+               '<input class="form-check-input participate" type="checkbox" id="' + this + '">' +
+               '</td>' +
+               '</tr>';
+        $(tb).append(elem);
 
     });
+
+    t = $('<table class="small table-condensed table table-hover">');
+    th = $("<thead>");
+    elem = $("<tr>");
+    $(elem).append("<th>Colocataire</th>");
+    $(elem).append("<th>Participe</th>");
+    $(th).append(elem);
+    $(t).append(th);
+    $(t).append(tb);
+    $(modal).find(".modal-body").append(t);
+    elem = "<input type='hidden' id='id' value='-1'>";
+    $(modal).find(".modal-body").append(elem);
 
 };
 
@@ -141,10 +209,10 @@ Coloc.prototype.buildAddForm = function() {
     $(modal).find(".modal-body").empty();
 
     elem = '<div class="form-group row">' +
-           '<div class="col-sm-5">' +
+           '<div class="col-sm-3">' +
            '<label for="total"><i class="fa fa-calendar"></i>  Date</label>' +
            '</div>' +
-           '<div class="col-sm-7">' +
+           '<div class="col-sm-9">' +
            '<input type="date" id="date" class="form-control" value="' + new Date().toISOString().substring(0, 10) +
            '"> ' +
            '</div>' +
@@ -152,60 +220,69 @@ Coloc.prototype.buildAddForm = function() {
     $(modal).find(".modal-body").append(elem);
 
     elem = '<div class="form-group row">' +
-           '<div class="col-sm-5">' +
+           '<div class="col-sm-3">' +
            '<label for="total"><i class="fa fa-ticket"></i>  Type</label>' +
            '</div>' +
-           '<div class="col-sm-7">' +
+           '<div class="col-sm-9">' +
            ' <select class="form-control" id="type">';
     $(this.types).each(function(){ elem += '<option value="' + this + '">' + this });
-    elem += '<option value="Depot">' + "Depot";
     elem += '</select>' +
             '</div>' +
             '</div>';
     $(modal).find(".modal-body").append(elem);
 
     elem = '<div class="form-group row">' +
-           '<div class="col-sm-5">' +
+           '<div class="col-sm-3">' +
            '<label for="total"><i class="fa fa-eur"></i>  Total</label>' +
            '</div>' +
-           '<div class="col-sm-7">' +
+           '<div class="col-sm-9">' +
            '<input type="number" id="total" placeholder="Exemple 80" class="form-control"> ' +
            '</div>' +
            '</div>';
     $(modal).find(".modal-body").append(elem);
     elem = '<div class="form-group row">' +
-           '<div class="col-sm-5">' +
-           '<label for="coms"><i class="fa fa-text"></i>  Commentaires</label>' +
+           '<div class="col-sm-3">' +
+           '<label for="coms"><i class="fa fa-text"></i>  Commentaire</label>' +
            '</div>' +
-           '<div class="col-sm-7">' +
+           '<div class="col-sm-9">' +
            '<textarea id="coms" class="form-control"> </textarea>' +
            '</div>' +
            '</div>';
     $(modal).find(".modal-body").append(elem);
-
+    tb = $("<tbody>");
     $(this.users).each(function() {
-        elem = '<div class="form-group row">' +
-               '<label class="col-sm-2"><i class="fa fa-user"></i>  ' + this + ' </label>' +
-               '<div class="col-sm-2">' +
-               '<label class="form-check-label"> Participe</label>' +
-               '<input class="form-check-input participate" type="checkbox" id="' + this + '">' +
-               '</div>' +
-               '<div class="col-sm-2">' +
-               '<label class="form-check-label"> Payement</label>' +
-               '<input class="form-check-input payed" type="checkbox" id="' + this + '">' +
-               '</div>' +
-               '<div class="col-sm-6" >' +
-               '<input class="form-control realPayed" style="width: 95%;display:inline" value="0" type="number" id="' +
-               this + '"><i class="fa fa-eur"></i>' +
-               '</label>' +
-               '</div>' +
-               '</div>';
-        $(modal).find(".modal-body").append(elem)
 
-            elem = "<input type='hidden' id='id' value='-1'>";
-        $(modal).find(".modal-body").append(elem);
+        elem = '<tr>' +
+               '<td><i class="fa fa-user"></i>  ' + this + ' </td>' +
+               '<td>' +
+               '<input class="form-check-input participate" type="checkbox" id="' + this + '">' +
+               '</td>' +
+               '<td>' +
+               '<input class="form-check-input payed" type="checkbox" id="' + this + '">' +
+               '</td>' +
+               '<td>' +
+               '<input class="form-control realPayed" style="width: 90%;display:inline" value="0" type="number" id="' +
+               this + '"> <i class="fa fa-eur"></i>' +
+               '</td>' +
+               '</tr>';
+        $(tb).append(elem);
 
     });
+
+    t = $('<table class="small  table-condensed table table-hover">');
+    th = $("<thead>");
+    elem = $("<tr>");
+    $(elem).append("<th>Colocataire</th>");
+    $(elem).append("<th>Participe</th>");
+    $(elem).append("<th>Payement</th>");
+    $(elem).append("<th>Somme</th>");
+    $(th).append(elem);
+    $(t).append(th);
+    $(t).append(tb);
+    $(modal).find(".modal-body").append(t);
+
+    elem = "<input type='hidden' id='id' value='-1'>";
+    $(modal).find(".modal-body").append(elem);
 
 };
 
@@ -219,10 +296,10 @@ Coloc.prototype.buildConfigForm = function() {
     $(this.modal).find("#save").show()
 
         elem = '<div class="form-group row">' +
-               '<div class="col-sm-5">' +
+               '<div class="col-sm-3">' +
                '<label for="total"><i class="fa fa-ticket"></i>  Types</label>' +
                '</div>' +
-               '<div class="col-sm-7">';
+               '<div class="col-sm-9">';
     $(this.types).each(function(key, value) {
         elem += '<div class="form-group row">';
         elem += '<div class="col-sm-9"><input type="text" value="' + value + '" class="form-control type"></div>';
@@ -237,10 +314,10 @@ Coloc.prototype.buildConfigForm = function() {
 
     $(modal).find(".modal-body").append(elem);
     elem = '<div class="form-group row">' +
-           '<div class="col-sm-5">' +
-           '<label for="total"><i class="fa fa-user"></i> Users</label>' +
+           '<div class="col-sm-3">' +
+           '<label for="total"><i class="fa fa-user"></i> Colocataires</label>' +
            '</div>' +
-           '<div class="col-sm-7 container-fluid">';
+           '<div class="col-sm-9 container-fluid">';
     $(this.users).each(function(key, value) {
         elem += '<div class="form-group row">';
         elem += '<div class="col-sm-9"><input type="text" value="' + value + '" class="form-control user"></div>';
@@ -257,7 +334,9 @@ Coloc.prototype.buildConfigForm = function() {
 
 // Binders
 
-Coloc.prototype.bindWndow = function() {
+Coloc.prototype.bindWindow = function() {
+
+    let coloc = this;
 
     $(".panel-body").css({ "overflow" : "auto", "padding" : "0" });
 
@@ -275,6 +354,7 @@ Coloc.prototype.bindWndow = function() {
 
     });
     $(window).resize();
+    $("#modal-close").on("click", () => { coloc.closeModal(); });
 
 };
 
@@ -293,12 +373,16 @@ Coloc.prototype.bindDepotForm = function() {
 
     });
 
-    $(modal).find("#close").unbind("click").click(function() { inst.refresh(); });
+    $(modal).find("#close").unbind("click").click(function() {
+        inst.refresh();
+        inst.closeModal();
+    });
 
     $(modal).find("#delete").unbind("click").click(function() {
         let id = $(modal).find("#id").val();
         inst.database.splice(id, 1);
         inst.refresh();
+        inst.closeModal();
     });
 
     $(modal).find("#save").unbind("click").click(function() {
@@ -332,6 +416,7 @@ Coloc.prototype.bindDepotForm = function() {
             inst.insertRow("Depot", total, date, coms, users);
         }
         inst.refresh();
+        inst.closeModal();
 
     });
 };
@@ -368,12 +453,17 @@ Coloc.prototype.bindAddForm = function() {
         $(modal).find(".participate:checked").each(function(){ $(modal).find("#" + this.id + "_realPayed").val(part) });
     });
 
-    $(modal).find("#close").unbind("click").click(function() { inst.refresh(); });
+    $(modal).find("#close").unbind("click").click(function() {
+        inst.refresh();
+        inst.closeModal();
+    });
 
     $(modal).find("#delete").unbind("click").click(function() {
         let id = $(modal).find("#id").val();
         inst.database.splice(id, 1);
         inst.refresh();
+        inst.closeModal();
+
     });
 
     $(modal).find("#save").unbind("click").click(function() {
@@ -413,6 +503,7 @@ Coloc.prototype.bindAddForm = function() {
             inst.insertRow(type, total, date, coms, users);
         }
         inst.refresh();
+        inst.closeModal();
 
     });
 };
@@ -445,10 +536,14 @@ Coloc.prototype.bindConfigForm = function() {
         inst.types = Array();
         $(modal).find(".type").each(function() { inst.types.push($(this).val()); });
         inst.refresh();
+        inst.closeModal();
 
     });
 
-    $(modal).find("#close").unbind("click").click(function() { inst.refresh(); });
+    $(modal).find("#close").unbind("click").click(function() {
+        inst.refresh();
+        inst.closeModal();
+    });
 
 };
 
@@ -456,7 +551,7 @@ Coloc.prototype.bindList = function() {
     let obj = this;
     $(this.list.tb).find("tr").unbind("dblclick").on("dblclick", function() {
         id = $(this).find(".id").html();
-        obj.EditPanel(id);
+        obj.ShowInfo(id);
 
     });
 
@@ -466,8 +561,7 @@ Coloc.prototype.bindList = function() {
 Coloc.prototype.ConfigPanel = function() {
     this.buildConfigForm();
     this.bindConfigForm();
-    $(window).resize();
-
+    this.showModal();
 };
 
 Coloc.prototype.EditPanel = function(id) {
@@ -484,29 +578,27 @@ Coloc.prototype.EditPanel = function(id) {
         this.loadAddEditData(id);
     }
 
-    $(this.modal).modal();
-    $(window).resize();
-
+    this.showModal();
 };
 
 Coloc.prototype.AddPanel = function() {
     this.buildAddForm();
     this.bindAddForm();
-    $(window).resize();
-
+    this.showModal();
 };
 
 Coloc.prototype.DepotPanel = function() {
     this.buildDepotForm();
     this.bindDepotForm();
-    $(window).resize();
+    this.showModal();
 
 };
 
 Coloc.prototype.refresh = function() {
-    this.saveData();
+
     this.database.sort(this.sortbydate);
-    this.clearModal();
+    this.saveData();
+    this.closeModal();
     this.recalculate();
     this.loadList();
     this.bindList();
@@ -515,9 +607,11 @@ Coloc.prototype.refresh = function() {
 
 // Private Fn
 
-Coloc.prototype.sortbydate = function(a, b) {
-    let t = (Date.parse(a.date) < Date.parse(b.date));
-    return (t)
+Coloc.prototype.sortbydate = function(da, db) {
+
+    let a = Date.parse(da.date);
+    let b = Date.parse(db.date);
+    return a > b ? -1 : a < b ? 1 : 0;
 };
 
 Coloc.prototype.loadAddEditData = function(id) {
@@ -583,12 +677,30 @@ Coloc.prototype.recalculate = function() {
 
 };
 
-Coloc.prototype.clearModal = function() {
+Coloc.prototype.closeModal = function(callback) {
 
-    $(this.modal).find("#title").empty();
-    $(this.modal).find(".modal-body").empty();
-    $(this.modal).find(".modal-footer").children().hide();
+    $(this.modal).modal("hide");
+    $(this.modal).unbind('hidden.bs.modal').on('hidden.bs.modal', () => {
+        $(this.modal).find("#title").empty();
+        $(this.modal).find(".modal-body").empty();
+        $(this.modal).find(".modal-footer").children().hide();
+        try {
+            callback();
+        } catch(e) {
+        }
+    });
 
+};
+
+Coloc.prototype.showModal = function(callback) {
+    $(this.modal).modal("show");
+    $(this.modal).unbind('shown.bs.modal').on('shown.bs.modal', () => {
+        $(window).resize();
+        try {
+            callback();
+        } catch(e) {
+        }
+    });
 };
 
 Coloc.prototype.loadCredits = function() {
@@ -640,6 +752,80 @@ Coloc.prototype.replaceRow = function(_id, _type, _total, _date, _coms, _users) 
     this.database[id] = elem;
 };
 
+Coloc.prototype.ShowInfo = function(id) {
+    this.BuildInfo(id);
+    this.BindInfo(id);
+    this.showModal();
+};
+
+Coloc.prototype.BuildInfo = function(id) {
+    let d = this.database[id];
+    let modal = this.modal;
+    let elem;
+    let row;
+    $(this.modal).find("#close").show();
+    $(this.modal).find("#edit").show();
+
+    $(modal).find("#title").text("Details");
+    $(modal).find(".modal-body").empty();
+
+    panel = "<div class='panel panel-default'></div>";
+
+    elem = $(panel);
+    $(elem).append("<div class='panel-heading'>Date</div>");
+    $(elem).append("<div class='panel-body'>" + d.date + "</div>");
+    $(modal).find(".modal-body").append(elem);
+    elem = $(panel);
+    $(elem).append("<div class='panel-heading'>Type</div>");
+    $(elem).append("<div class='panel-body'>" + d.type + "</div>");
+    $(modal).find(".modal-body").append(elem);
+
+    elem = $(panel);
+    $(elem).append("<div class='panel-heading'>Discription</div>");
+    $(elem).append("<div class='panel-body'>" + d.coms + "</div>");
+    $(modal).find(".modal-body").append(elem);
+
+    elem = $('<table class="table table-bordered table-inverse "></table>');
+    th = $("<thead>");
+    row = $("<tr>");
+    $(row).append("<th>User</th>");
+    $(row).append("<th>Part</th>");
+    $(row).append("<th>Payé</th>");
+    $(th).append(row);
+    tb = $("<tbody>");
+    $(this.users).each(function() {
+
+        if(!d.users[this] || (d.users[this] && !d.users[this].participate)) {
+        } else {
+
+            row = $("<tr>");
+            $(row).append("<td>" + this + "</td>");
+
+            if(d.users[this].part || d.users[this].realPayed) {
+                $(row).append("<td>" + d.users[this].part + "</td>");
+                $(row).append("<td>" + d.users[this].realPayed + "</td>");
+
+            } else {
+                $(row).append("<td>-/-</td>");
+                $(row).append("<td>-/-</td>");
+            }
+            $(tb).append(row);
+        }
+    });
+    $(elem).append(th);
+    $(elem).append(tb);
+    $(modal).find(".modal-body").append(elem);
+};
+
+Coloc.prototype.BindInfo = function(id) {
+    let coloc = this;
+    $(this.modal).find("#edit").unbind().bind("click", () => {
+
+        coloc.closeModal(() => { coloc.EditPanel(id); });
+
+    });
+    $(this.modal).find("#close").unbind().bind("click", () => { coloc.closeModal(); });
+};
 Coloc.prototype.loadList = function() {
     let obj = this;
 
@@ -647,7 +833,6 @@ Coloc.prototype.loadList = function() {
     this.buildList();
     $(this.database).each(function(index, value) {
         let d = value;
-
         let row = $("<tr>");
         $(row).append("<th class='id' scope='row'>" + index + "</th>");
         $(row).append("<td>" + d.date + "</td>");
@@ -659,21 +844,6 @@ Coloc.prototype.loadList = function() {
         } else {
             $(row).append("<td>-/-</td>");
         }
-
-        payed = 0;
-        $(obj.users).each(function() {
-            if(d.users[this] && (d.users[this].payed || d.users[this].participate)) {
-                payed += Number(d.users[this].realPayed);
-                $(row).append("<td>" + d.users[this].part + "</td>");
-                td = $("<td>" + d.users[this].realPayed + "</td>");
-                $(row).append(td);
-
-            } else {
-                $(row).append("<td>-/-</td>");
-                $(row).append("<td>-/-</td>");
-            }
-        });
-
         $(obj.list.tb).append(row);
     });
 
