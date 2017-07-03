@@ -32,7 +32,7 @@ app.on('ready', function() {
     mainWindow.loadURL('file://' + __dirname + '/index.html');
 
     mainWindow.once("ready-to-show", function() { mainWindow.show(); });
-    //mainWindow.openDevTools();
+    // mainWindow.openDevTools();
 
     mainWindow.on('closed', function() { mainWindow = null; });
 });

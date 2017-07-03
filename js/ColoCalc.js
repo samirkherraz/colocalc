@@ -103,7 +103,6 @@ Coloc.prototype.resetCredit = function() {
         $(inst.users).each(function() { elem[this].realPayed = elem[this].part; });
 
     });
-    console.log(this.database);
     this.refresh();
 
 };
@@ -727,13 +726,26 @@ Coloc.prototype.loadCredits = function() {
 Coloc.prototype.readData = function() {
     let contenu;
 
-    if(contenu = this.fs.readFileSync(this.DB_NAME, "UTF-8"))
+    try {
+        contenu = this.fs.readFileSync(this.DB_NAME, "UTF-8");
         this.database = JSON.parse(contenu);
-    if(contenu = this.fs.readFileSync(this.CFG_USERS, "UTF-8"))
-        this.users = JSON.parse(contenu);
-    if(contenu = this.fs.readFileSync(this.CFG_TYPES, "UTF-8"))
-        this.types = JSON.parse(contenu);
+    } catch(e) {
+        this.database = new Array();
+    }
 
+    try {
+        contenu = this.fs.readFileSync(this.CFG_USERS, "UTF-8");
+        this.users = JSON.parse(contenu);
+    } catch(e) {
+        this.users = new Array();
+    }
+
+    try {
+        contenu = this.fs.readFileSync(this.CFG_TYPES, "UTF-8");
+        this.types = JSON.parse(contenu);
+    } catch(e) {
+        this.types = new Array();
+    }
 };
 
 Coloc.prototype.saveData = function() {
