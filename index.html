@@ -77,10 +77,10 @@
                 <div class="collapse navbar-collapse" id="menu_collapse">
 
                     <ul class="nav navbar-nav navbar-right">
-                       <li><a class="btn" href="javascript://" onclick="c.AddPanel()"><i class="fa fa-plus"></i> Add</a></li>
-                       <li><a class="btn" href="javascript://" onclick="c.DepotPanel()"><i class="fa fa-plus"></i> Déposer</a></li>
-                       <li><a class="btn" href="javascript://" onclick="c.ConfigPanel()"><i class="fa fa-wrench"></i> Configuration</a></li>
-                       <li><a class="btn" href="javascript://" onclick="c.resetDB()"><i class="fa fa-refresh"></i> Remetre a Zéro</a></li>
+                       <li><a  id="BTNAdd" class="btn" href="javascript://" onclick="c.AddPanel()"><i class="fa fa-plus"></i> Add</a></li>
+                       <li><a  id="BTNDeposit" class="btn" href="javascript://" onclick="c.DepotPanel()"><i class="fa fa-plus"></i> Déposer</a></li>
+                       <li><a  id="BTNConfig" class="btn" href="javascript://" onclick="c.ConfigPanel()"><i class="fa fa-wrench"></i> Configuration</a></li>
+                       <li><a  id="BTNReset" class="btn" href="javascript://" onclick="c.resetDB()"><i class="fa fa-refresh"></i> Remetre a Zéro</a></li>
                     </ul>
                 </div>
                 <!-- /.navbar-collapse -->
@@ -95,7 +95,7 @@
     <div class="row">
       <div class="col-sm-8">
         <div class="panel panel-default ">
-          <div class="panel-heading">History</div>
+          <div class="panel-heading" id="HistoryLabel">History</div>
           <div class="panel-body fit">
             <table class="small  table-condensed table table-hover">
               <thead id="ListTableH"></thead>
@@ -108,7 +108,7 @@
       </div>
       <div class="col-sm-4 ">
         <div class="panel panel-primary">
-          <div class="panel-heading ">Total</div>
+          <div class="panel-heading" id="TotalLabel">Total</div>
           <div class="panel-body">
             <table class="table table-bordered table-inverse ">
               <tbody id="creditsPanel"></tbody>
@@ -139,10 +139,10 @@
 
           </div>
           <div class="modal-footer">
-            <button type="button" style="display: none" class="btn btn-success" id="edit"><i class="fa fa-edit"></i>  Modifier</button>
-            <button type="button" style="display: none" class="btn btn-danger" id="delete"><i class="fa fa-trash-o"></i>  Supprimer</button>
-            <button type="button" style="display: none" class="btn btn-success" id="save" ><i class="fa fa-floppy-o"></i>  Enregistrer</button>
-            <button type="button" style="display: none" class="btn btn-default" id="close"><i class="fa fa-times"></i>  Fermer</button>
+            <button type="button" style="display: none" class="btn btn-success" id="edit"><i class="fa fa-edit"></i>  Edit</button>
+            <button type="button" style="display: none" class="btn btn-danger" id="delete"><i class="fa fa-trash-o"></i>  Delete</button>
+            <button type="button" style="display: none" class="btn btn-success" id="save" ><i class="fa fa-floppy-o"></i>  Save</button>
+            <button type="button" style="display: none" class="btn btn-default" id="close"><i class="fa fa-times"></i>  Close</button>
           </div>
         </div>
       </div>
