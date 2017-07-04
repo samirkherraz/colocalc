@@ -10,28 +10,35 @@
     "Gérer"
   ],
   "devDependencies": {
-    "electron-prebuilt": "^1.4.4"
+    "electron-prebuilt": "latest"
   },
   "license": "GPLv3",
   "main": "index.js",
   "private": false,
-
   "scripts": {
     "start": "electron ."
   },
-  "dependencies": {
-    "jquery": "^3.1.1"
-  },
+  
   "build": {
-  "appId": "com.skad.colocalc",
-  "linux": {
-      "icon": "icons/",
+    "files": [
+      "**/*",
+      "!.git",
+      "!node_modules",
+      "!dist",
+      "build.sh",
+      "package.json"
+    ],
+    "compression": "maximum",
+    "appId": "com.skad.colocalc",
+    "linux": {
+      "icon": "com.skad.colocalc/icons/",
       "target": [
         "AppImage",
-        "deb"
-      ]
+        "deb",
+        "rpm"
+        
+      ],
+      "maintainer": "Samir KHERRAZ <samir.kherraz@outlook.fr"
     }
-
-}
-  
+  }
 }

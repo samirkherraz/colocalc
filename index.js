@@ -2,14 +2,14 @@ const electron = require("electron");
 let app = electron.app;
 let BrowserWindow = electron.BrowserWindow;
 let mainWindow = null;
-global.config = [
-    __dirname + "/css/bootstrap.css",
-    __dirname + "/css/font-awesome.min.css",
-    __dirname + "/js/bootstrap.min.js",
-    __dirname + "/js/ColoCalc.js"
-];
+global.APP_DIR = __dirname + '/com.skad.colocalc';
+global.DATA_DIR = app.getPath('userData');
 
-global.DEFAULT_DIR = app.getPath('userData');
+global.config = [
+    global.APP_DIR + "/js/jquery.min.js",
+    global.APP_DIR + "/js/bootstrap.min.js",
+    global.APP_DIR + "/js/ColoCalc.js"
+];
 
 app.on('window-all-closed', function() {
 
@@ -29,10 +29,10 @@ app.on('ready', function() {
     });
     mainWindow.setMenu(null);
     // mainWindow.maximize();
-    mainWindow.loadURL('file://' + __dirname + '/index.html');
+    mainWindow.loadURL('file://' + global.APP_DIR + '/index.html');
 
     mainWindow.once("ready-to-show", function() { mainWindow.show(); });
-    mainWindow.openDevTools();
+    // mainWindow.openDevTools();
 
     mainWindow.on('closed', function() { mainWindow = null; });
 });
