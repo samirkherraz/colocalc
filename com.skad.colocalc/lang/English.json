@@ -21,6 +21,8 @@
    "_Total":"Total",
    "_Type":"Type",
    "_Details":"Details",
-   "_Total of mounth": "Total of mounth"
+   "_Total of mounth": "Total of mounth",
+   "_Summary":"Summary of Transactions",
+   "_Export PDF": "Export to pdf"
 
 }

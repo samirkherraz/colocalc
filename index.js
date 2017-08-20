@@ -1,3 +1,4 @@
+"use strict";
 const electron = require("electron");
 let app = electron.app;
 let BrowserWindow = electron.BrowserWindow;
@@ -8,7 +9,9 @@ global.DATA_DIR = app.getPath('userData');
 global.config = [
     global.APP_DIR + "/js/jquery.min.js",
     global.APP_DIR + "/js/bootstrap.min.js",
-    global.APP_DIR + "/js/ColoCalc.js"
+    global.APP_DIR + "/js/ColoCalc.js",
+    global.APP_DIR + "/js/jspdf.min.js",
+    global.APP_DIR + "/js/jspdf.plugin.autotable.min.js"
 ];
 
 app.on('window-all-closed', function() {

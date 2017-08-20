@@ -21,7 +21,8 @@
    "_Total":"Total",
    "_Type":"Type",
    "_Details":"Détails",
-   "_Total of mounth": "Total du mois"
-
+   "_Total of mounth": "Total du mois",
+   "_Summary": "Résumé des transactions",
+   "_Export PDF": "Éxporter en pdf"
 
 }

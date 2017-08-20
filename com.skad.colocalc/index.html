@@ -51,6 +51,36 @@
       user-select: none;
       cursor: default;
     }
+
+  .St-1{
+    background-color: #DA70D6;
+  }
+
+ .St-2{
+    background-color: #EED2EE;
+  }
+
+ .St-3{
+    background-color: #B0C4DE;
+  }
+
+ .St-4{
+    background-color: #838B8B;
+  }
+
+ .St-5{
+    background-color: #EEE685;
+  }
+
+ .St-6{
+    background-color: #CDBA96;
+  }
+
+ .St-0{
+    background-color: #EECBAD;
+  }
+  
+
   </style>
 
   <link rel="stylesheet" type="text/css" href="./css/font-awesome.min.css">
@@ -69,6 +99,10 @@
 
 
 </div>
+
+
+
+
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
             <div class="container">
                 <!-- Brand and toggle get grouped for better mobile display -->
@@ -91,6 +125,7 @@
                        <li><a  id="BTNAdd" class="btn" href="javascript://" onclick="c.AddPanel()"><i aria-hidden="true" class="fa fa-plus"></i> Add</a></li>
                        <li><a  id="BTNDeposit" class="btn" href="javascript://" onclick="c.DepotPanel()"><i aria-hidden="true" class="fa fa-plus"></i> Déposer</a></li>
                        <li><a  id="BTNConfig" class="btn" href="javascript://" onclick="c.ConfigPanel()"><i aria-hidden="true" class="fa fa-wrench"></i> Configuration</a></li>
+                       <li><a  id="BTNPdf" class="btn" href="javascript://" onclick="c.buildPdf()"><i aria-hidden="true" class="fa fa-pdf"></i> Éxporter en PDF</a></li>
                     </ul>
                 </div>
                 <!-- /.navbar-collapse -->
@@ -166,13 +201,6 @@
       </div>
     </div>
   </div>
-
-
-
-
-
-
-
 
 </body>
 

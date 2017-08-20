@@ -21,6 +21,7 @@
    "_Total":"مجموع",
    "_Type":"نوع",
    "_Details":"تفاصيل",
-   "_Total of mounth": "إجمالي الشهر"
-
+   "_Total of mounth": "إجمالي الشهر",
+   "_Summary":"ملخص المعاملات",
+   "_Export PDF": "تصدير PDF"
 }

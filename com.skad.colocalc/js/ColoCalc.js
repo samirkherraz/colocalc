@@ -18,22 +18,13 @@ let Coloc = function(callback) {
     this.modal = $("#modal");
     this.credits;
     this.creditsPanel = $("#creditsPanel");
-    $("#loading-bar").text("Init vars");
+    $("#loading-bar").text("Init");
     $("#loading-bar").animate({ "width" : "50%" }, 50);
 
-    $("#loading-bar").text("Checking dirs");
     this.initDir();
-    $("#loading-bar").animate({ "width" : "60%" }, 50);
-
-    $("#loading-bar").text("Reading Data");
     this.readData();
-    $("#loading-bar").animate({ "width" : "70%" }, 50);
-
-    $("#loading-bar").text("init interface");
+    this.buildStyles();
     this.refresh();
-    $("#loading-bar").animate({ "width" : "80%" }, 50);
-
-    $("#loading-bar").text("init functions");
     this.bindWindow();
 
     $("#loading-bar").animate({ "width" : "100%" }, 50, () => { callback(); });
@@ -41,6 +32,89 @@ let Coloc = function(callback) {
 };
 
 // Builders
+
+Coloc.prototype.buildPdf = function(callback = null)
+{
+
+    let obj = this;
+
+    var columns = [];
+    var rows = [];
+
+    columns.push("#");
+    columns.push(obj._("_Date"));
+    columns.push(obj._("_Type"));
+    for(let i = 0; i < obj.users.length; i++) {
+        columns.push(obj.users[i] + " Part");
+        columns.push(obj.users[i] + " Payed");
+    }
+    columns.push(obj._("_Total"));
+    columns.push(obj._("_Comments"));
+
+    for(let i = 0; i < obj.database.length; i++) {
+
+        let tr = [];
+        let d = obj.database[i];
+        tr.push(i);
+        tr.push(d.date);
+        tr.push(d.type);
+        $(obj.users).each(function() {
+
+            if(!d.users[this] || (d.users[this] && !d.users[this].participate)) {
+                tr.push("N/A");
+                tr.push("N/A");
+            } else {
+
+                if(d.users[this].part || d.users[this].realPayed) {
+                    tr.push(d.users[this].part);
+                    tr.push(d.users[this].realPayed);
+
+                } else {
+                    tr.push("-/-");
+                    tr.push("-/-");
+                }
+            }
+        });
+        tr.push(d.total);
+        tr.push(d.coms);
+        rows.push(tr);
+    }
+
+    var doc = new jsPDF({ orientation : 'l', unit : 'pt', format : 'a4' });
+    doc.text("ColoCalc - " + obj._("_Summary"), 40, 30);
+    doc.text(new Date().toDateString(), 40, 50);
+    let i = 1;
+    doc.autoTable(columns, rows, {
+        styles : {
+                   cellPadding : 4, // a number, array or object (see margin below)
+                   fontSize : 7,
+                   halign : 'left',
+                   overflow : 'linebreak', // visible, hidden, ellipsize or linebreak // left, center, right
+                 },
+        showHeader : 'firstPage',
+        theme : 'grid',
+        tableWidth : "auto",
+        startY : 60,
+        margin : 20,
+        addPageContent : function(data) {
+            doc.setFontSize(7);
+            doc.text("Page :" + i, 780, 585);
+            i = i + 1;
+        }
+
+    });
+
+    doc.save('table.pdf');
+};
+
+Coloc.prototype.buildStyles = function() {
+    let obj = this;
+    obj.Styles = Array();
+    for(let i = 0; i < obj.types.length; i++) {
+        obj.Styles[obj.types[i]] = "St-" + (i % 7);
+    }
+
+};
 
 Coloc.prototype._ = function(index) {
 
@@ -651,6 +725,7 @@ Coloc.prototype.refresh = function() {
     $('#BTNAdd').text(this._("_Add"));
     $('#BTNDeposit').text(this._("_Deposit"));
     $('#BTNConfig').text(this._("_Configuration"));
+    $('#BTNPdf').text(this._("_Export PDF"));
     $('#TotalMounthLabel').text(this._("_Total of mounth"));
 
 };
@@ -916,12 +991,13 @@ Coloc.prototype.loadList = function() {
         $(row).append("<td>" + d.date + "</td>");
         $(row).append("<td>" + d.type + "</td>");
         $(row).append("<td>" + d.coms + "</td>");
-
+        $(row).addClass(obj.Styles[d.type]);
         if(d.total) {
             $(row).append("<td>" + d.total + "</td>");
         } else {
             $(row).append("<td>-/-</td>");
         }
+
         $(obj.list.tb).append(row);
     });
 
