@@ -10,6 +10,7 @@ let Coloc = function(callback) {
     this.DB_NAME = this.database_dir + "default.db";
     this.CFG = this.config_dir + "default.cfg";
     this.lang = "English";
+    this.colorRows = false;
     this.langArray = new Array();
     this.users = new Array();
     this.types = new Array();
@@ -38,8 +39,12 @@ Coloc.prototype.buildPdf = function(callback = null)
 
     let obj = this;
 
-    var columns = [];
-    var rows = [];
+    let columns = [];
+    let rows = [];
+
+    let Globalcolumns = [ obj._("_Flatmates"), obj._("_Total") ];
+    let Globalrows = obj.users.map((e) => { return [ e, obj.credits[e] ]; });
+    console.log(Globalrows);
 
     columns.push("#");
     columns.push(obj._("_Date"));
@@ -82,6 +87,23 @@ Coloc.prototype.buildPdf = function(callback = null)
 
     var doc = new jsPDF({ orientation : 'l', unit : 'pt', format : 'a4' });
     doc.text("ColoCalc - " + obj._("_Summary"), 40, 30);
+    doc.text(new Date().toDateString(), 40, 50);
+    doc.autoTable(Globalcolumns, Globalrows, {
+        styles : {
+                   cellPadding : 8, // a number, array or object (see margin below)
+                   fontSize : 16,
+                   halign : 'left',
+                   overflow : 'linebreak', // visible, hidden, ellipsize or linebreak // left, center, right
+                 },
+        showHeader : 'firstPage',
+        theme : 'grid',
+        tableWidth : "auto",
+        startY : 120,
+        margin : 120
+
+    });
+    doc.addPage();
+    doc.text("ColoCalc - " + obj._("_Details"), 40, 30);
     doc.text(new Date().toDateString(), 40, 50);
     let i = 1;
     doc.autoTable(columns, rows, {
@@ -137,7 +159,8 @@ Coloc.prototype.initDir = function() {
         coloc.fs.mkdir(coloc.config_dir);
 
         coloc.fs.writeFileSync(coloc.DB_NAME, JSON.stringify(new Array()), "UTF-8");
-        coloc.fs.writeFileSync(coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English"}', "UTF-8");
+        coloc.fs.writeFileSync(
+            coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English", "COLOR_ROWS": false}', "UTF-8");
     }
 
     try {
@@ -151,7 +174,8 @@ Coloc.prototype.initDir = function() {
         coloc.fs.accessSync(coloc.config_dir, coloc.fs.F_OK);
     } catch(e) {
         coloc.fs.mkdir(coloc.config_dir);
-        coloc.fs.writeFileSync(coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English"}', "UTF-8");
+        coloc.fs.writeFileSync(
+            coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English", "COLOR_ROWS": false}', "UTF-8");
     }
 
     try {
@@ -163,7 +187,8 @@ Coloc.prototype.initDir = function() {
     try {
         coloc.fs.accessSync(coloc.CFG, coloc.fs.F_OK);
     } catch(e) {
-        coloc.fs.writeFileSync(coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English"}', "UTF-8");
+        coloc.fs.writeFileSync(
+            coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English", "COLOR_ROWS": false}', "UTF-8");
     }
 
 };
@@ -189,7 +214,7 @@ Coloc.prototype.resetCredit = function() {
 
 Coloc.prototype.buildList = function() {
 
-    elem = "<tr><th><i class='fa fa-key'></i></th>";
+    let elem = "<tr><th><i class='fa fa-key'></i></th>";
     elem += "<th>" + this._("_Date") + "</th>";
     elem += "<th>" + this._("_Type") + "</th>";
     elem += "<th>" + this._("_Comments") + "</th>";
@@ -378,7 +403,7 @@ Coloc.prototype.buildConfigForm = function() {
     $(this.modal).find("#save").show();
     elem = '<div class="form-group row">' +
            '<div class="col-sm-3">' +
-           '<label for="total"><i class="fa fa-lang"></i> ' + this._("_Language") + '</label>' +
+           '<label for="total"><i class="fa fa-language"></i> ' + this._("_Language") + '</label>' +
            '</div>' +
            '<div class="col-sm-9">' +
            '<select class="form-control" id="lang">';
@@ -395,6 +420,29 @@ Coloc.prototype.buildConfigForm = function() {
         elem += ">" + lang + "</option>";
     }
     elem += "</select></div></div>";
+
+    $(modal).find(".modal-body").append(elem);
+
+    elem = '<div class="form-group row  ">' +
+           '<div class="col-sm-3">' +
+           '<label for="colorrows"><i class="fa fa-paint-brush"></i> ' + this._("_Color Rows") + '</label>' +
+           '</div>' +
+           '<div class="col-sm-9 btn-group" data-toggle="buttons">' +
+           '<label class="btn btn-default ';
+    if(coloc.colorRows === true) {
+        elem += ' active'
+    }
+    elem += '" id="colorrows">' +
+            '<input type="checkbox" autocomplete="off" ';
+
+    if(coloc.colorRows === true) {
+        elem += ' checked';
+    }
+    elem += '>' +
+            '<i class="toggle-yes fa fa-check"></i>' +
+            '<i class="toggle-no fa fa-times"></i>' +
+            '</label>' +
+            '</div></div>';
     $(modal).find(".modal-body").append(elem);
 
     elem = '<div class="form-group row">' +
@@ -436,7 +484,8 @@ Coloc.prototype.buildConfigForm = function() {
     elem +=
         '<div class="col-sm-offset-7 col-sm-5"><bouton class="btn btn-danger" id="resetDb"><i class="fa fa-reset"></i>  ' +
         this._("_Reset") + '</bouton></div>';
-    elem += '</div></div></div>';
+    elem += '</div>';
+    elem += ' </div></div >';
     $(modal).find(".modal-body").append(elem);
 
 };
@@ -646,6 +695,7 @@ Coloc.prototype.bindConfigForm = function() {
         $(modal).find(".type").each(function() { inst.types.push($(this).val()); });
 
         inst.lang = $(modal).find("#lang").val();
+        inst.colorRows = $(modal).find("#colorrows").hasClass("active");
         inst.refresh();
         inst.closeModal();
 
@@ -712,9 +762,9 @@ Coloc.prototype.refresh = function() {
     this.readData();
     this.closeModal();
     this.recalculate();
+    this.loadCredits();
     this.loadList();
     this.bindList();
-    this.loadCredits();
     this.calcuateMounthTotal();
     $('#HistoryLabel').text(this._("_History"));
     $('#TotalLabel').text(this._("_Total"));
@@ -837,8 +887,8 @@ Coloc.prototype.loadCredits = function() {
     $(this.creditsPanel).empty();
     $(this.users).each(function() {
 
-        elem = '<tr>' +
-               '<td><i class="fa fa-user"></i> ' + this + '</td>';
+        let elem = '<tr>' +
+                   '<td><i class="fa fa-user"></i> ' + this + '</td>';
 
         if(inst.credits[this] >= 0) {
             elem += '<td class="text-success">+' + inst.credits[this];
@@ -869,10 +919,12 @@ Coloc.prototype.readData = function() {
         this.users = json.USERS;
         this.types = json.TYPES;
         this.lang = json.LANG;
+        this.colorRows = json.COLOR_ROWS;
     } catch(e) {
         this.users = new Array();
-        this.types = json.TYPES;
+        this.types = new Array();
         this.lang = "English";
+        this.colorRows = false;
     }
 
     try {
@@ -888,7 +940,7 @@ Coloc.prototype.saveData = function() {
     this.fs.writeFileSync(this.DB_NAME, JSON.stringify(this.database), "UTF-8");
     this.fs.writeFileSync(this.CFG,
                           '{ "USERS" : ' + JSON.stringify(this.users) + ', "TYPES" : ' + JSON.stringify(this.types) +
-                              ' , "LANG": "' + this.lang + '"}',
+                              ' , "LANG": "' + this.lang + '","COLOR_ROWS" : ' + this.colorRows + '}',
                           "UTF-8");
 };
 
@@ -991,7 +1043,10 @@ Coloc.prototype.loadList = function() {
         $(row).append("<td>" + d.date + "</td>");
         $(row).append("<td>" + d.type + "</td>");
         $(row).append("<td>" + d.coms + "</td>");
-        $(row).addClass(obj.Styles[d.type]);
+
+        if(obj.colorRows === true) {
+            $(row).addClass(obj.Styles[d.type]);
+        }
         if(d.total) {
             $(row).append("<td>" + d.total + "</td>");
         } else {
