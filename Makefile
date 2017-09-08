@@ -1,4 +1,4 @@
-EB = ~/node_modules/.bin/electron-builder
+EB = /usr/local/bin/electron-builder
 
 
 ifeq ($(shell test -e $(EB) && echo -n yes),yes)
@@ -13,7 +13,7 @@ ifeq ($(Found), 1)
 	@echo "electron builder Found , no need to install" 
 else
 	@echo "electron builder Not Found , we need to install it" 
-	npm install electron-builder -G
+	sudo npm install electron-builder -g
 endif
 	$(EB) build --project ./
 

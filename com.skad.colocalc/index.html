@@ -8,7 +8,7 @@
    background: #eee;
    }
 
-#Loading{
+.Loading{
       position: fixed;
       width: 100%;
       top: 0px;
@@ -17,7 +17,7 @@
       background-color: #333;
       z-index: 10000;
   }
-  #loading-bar{
+  .loading-bar{
       text-align: left;
       font-size: 10px;
       margin: 0px;
@@ -28,8 +28,7 @@
       background-image: -webkit-linear-gradient(#337ab7,#115895);
 
   }
-  #loading-bar-parent{
-      border: solid 2px  #337ab7;
+  .loading-bar-parent{
       display: block;
       position: fixed;
       top: 30%;
@@ -41,7 +40,7 @@
       padding: 0px;
       background-color: #ccc;
   }
-  #loading-brand{ 
+  .loading-brand{ 
       font-size: 120px;
   }
      :not(input):not(textarea),
@@ -101,15 +100,48 @@
 </head>
 
 <body>
-<div id="Loading">
-<div id="loading-bar-parent" style="opacity: 0.5; text-align: center">
-<div id="loading-brand"><i aria-hidden="true" class="fa fa-money"></i></div>
+
+<div class="Loading" id="UserSelect">
+<div class="loading-bar-parent" style="text-align: center">
+<div class="loading-brand"><i aria-hidden="true" class="fa fa-user"></i></div>
+
+
+
+
+
+<ul class="nav nav-tabs">
+  <li class="active"><a id="BTNSelectUser" data-toggle="tab" href="#select">Select user</a></li>
+  <li><a id="BTNCreateUser" data-toggle="tab" href="#create">Create user</a></li>
+</ul>
+
+<div class="tab-content" >
+<div class="alert alert-danger" style="display: none;" id="ConnectError"></div>
+  <div id="select" class="tab-pane fade in active">
+    <select class="form-control" id="user">
+</select>
+<button class="btn btn-success form-control" id="Connect" >Connect</button>
+  </div>
+  <div id="create" class="tab-pane fade">
+  <div class="alert alert-danger" style="display: none;"  id="CreateError"></div>
+    <input class="form-control"  type="text" id="user_new">
+<button class="btn btn-success form-control" id="Create" >Create</button>
+
+  </div>
+</div>
+
+
+
+
+</div>
+</div>
+
+<div id="Loading" class="Loading">
+<div id="loading-bar-parent" class="loading-bar-parent" style="opacity: 0.5; text-align: center">
+<div id="loading-brand" class="loading-brand"><i aria-hidden="true" class="fa fa-money"></i></div>
 <div><h2>ColoCalc</h2></div>
-<div id="loading-bar">
+<div id="loading-bar" class="loading-bar">
 </div>
 </div>
-
-
 </div>
 
 
@@ -126,9 +158,10 @@
                       <span class="icon-bar"></span>
                     </button>
 
-                    <a class="navbar-brand btn" href="javascript://" onclick="top.location=top.location">
+                    <a class="navbar-brand btn" id="username" href="javascript://" onclick="top.location=top.location">
                       <i aria-hidden="true" class="fa fa-money"></i> ColoCalc
                     </a>
+                 
                 </div>
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse" id="menu_collapse">
@@ -149,7 +182,8 @@
 
 
   <div class="container-fluid" id="body">
-    <div class="row">
+  
+    <div class="row" >
       <div class="col-sm-8">
         <div class="panel panel-default " >
           <div class="panel-heading" id="HistoryLabel">History</div>

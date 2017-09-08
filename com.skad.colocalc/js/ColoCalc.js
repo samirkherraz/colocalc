@@ -3,36 +3,86 @@ let Coloc = function(callback) {
     this.fs = require('fs');
     this.ROOT = remote.getGlobal('APP_DIR');
     this.USERDATA = remote.getGlobal('DATA_DIR');
-    console.log(this.ROOT);
-    this.database_dir = this.USERDATA + "/db/";
-    this.config_dir = this.USERDATA + "/cfg/";
+    this.users_dir = this.USERDATA + "/u/";
+    this.GLOBAL_CONFIG = this.USERDATA + "/global.cfg";
+    this.currentTable = 0;
     this.LANG_DIR = this.ROOT + "/lang";
-    this.DB_NAME = this.database_dir + "default.db";
-    this.CFG = this.config_dir + "default.cfg";
     this.lang = "English";
     this.colorRows = false;
     this.langArray = new Array();
     this.users = new Array();
     this.types = new Array();
     this.database = new Array();
+    this.DB_NAME = String();
+    this.CFG = String();
     this.list = { th : $("#ListTableH"), tb : $("#ListTableB") };
     this.modal = $("#modal");
     this.credits;
     this.creditsPanel = $("#creditsPanel");
     $("#loading-bar").text("Init");
     $("#loading-bar").animate({ "width" : "50%" }, 50);
-
-    this.initDir();
-    this.readData();
-    this.buildStyles();
-    this.refresh();
-    this.bindWindow();
+    this.start();
 
     $("#loading-bar").animate({ "width" : "100%" }, 50, () => { callback(); });
 
 };
 
 // Builders
+Coloc.prototype.run = function() {
+    this.buildPath();
+    this.initDir();
+    this.readData();
+    this.buildStyles();
+    this.refresh();
+    this.bindWindow();
+};
+
+Coloc.prototype.buildPath = function() {
+    this.DB_NAME = this.users_dir + this.currentTable.toString() + "_table.db";
+    this.CFG = this.users_dir + this.currentTable.toString() + "_config.cfg";
+};
+
+Coloc.prototype.start = function() {
+    let obj = this;
+    $("#user").empty();
+
+    let users = this.fs.readdirSync(this.users_dir).map(o => { return o.split("_")[0]; }).filter(
+        (elem, index, self) => { return index == self.indexOf(elem); });
+
+    users.forEach(o => { $("#user").append("<option value='" + o + "' >" + o + '</option>'); });
+
+    $("#Connect").unbind().bind("click", function() {
+	obj.currentTable = $("#user").val();
+	if(obj.currentTable == "") {
+	    $("#ConnectError")
+	        .text("This user doesn't exist or we don't have enough permissions to access its data ")
+	        .show();
+	} else {
+	    obj.run();
+	    $("#UserSelect").fadeOut();
+	}
+
+    });
+
+    $("#Create").unbind().bind("click", function() {
+	obj.currentTable = $("#user_new").val();
+	obj.buildPath();
+	try {
+	    let s = obj.fs.accessSync(obj.DB_NAME, obj.fs.F_OK);
+	    $("#CreateError").text("This user already exists or we don't have enough permissions create it").show();
+	} catch(e) {
+	    try {
+		let s = obj.fs.accessSync(obj.CFG, obj.fs.F_OK);
+		$("#CreateError").text("This user already exists or we don't have enough permissions create it").show();
+	    } catch(e) {
+		obj.run();
+		$("#UserSelect").fadeOut();
+	    }
+	}
+
+    });
+
+};
 
 Coloc.prototype.buildPdf = function(callback = null)
 {
@@ -44,62 +94,61 @@ Coloc.prototype.buildPdf = function(callback = null)
 
     let Globalcolumns = [ obj._("_Flatmates"), obj._("_Total") ];
     let Globalrows = obj.users.map((e) => { return [ e, obj.credits[e] ]; });
-    console.log(Globalrows);
 
     columns.push("#");
     columns.push(obj._("_Date"));
     columns.push(obj._("_Type"));
     for(let i = 0; i < obj.users.length; i++) {
-        columns.push(obj.users[i] + " Part");
-        columns.push(obj.users[i] + " Payed");
+	columns.push(obj.users[i] + " Part");
+	columns.push(obj.users[i] + " Payed");
     }
     columns.push(obj._("_Total"));
     columns.push(obj._("_Comments"));
 
     for(let i = 0; i < obj.database.length; i++) {
 
-        let tr = [];
-        let d = obj.database[i];
-        tr.push(i);
-        tr.push(d.date);
-        tr.push(d.type);
-        $(obj.users).each(function() {
+	let tr = [];
+	let d = obj.database[i];
+	tr.push(i);
+	tr.push(d.date);
+	tr.push(d.type);
+	$(obj.users).each(function() {
 
-            if(!d.users[this] || (d.users[this] && !d.users[this].participate)) {
-                tr.push("N/A");
-                tr.push("N/A");
-            } else {
+	    if(!d.users[this] || (d.users[this] && !d.users[this].participate)) {
+		tr.push("N/A");
+		tr.push("N/A");
+	    } else {
 
-                if(d.users[this].part || d.users[this].realPayed) {
-                    tr.push(d.users[this].part);
-                    tr.push(d.users[this].realPayed);
+		if(d.users[this].part || d.users[this].realPayed) {
+		    tr.push(d.users[this].part);
+		    tr.push(d.users[this].realPayed);
 
-                } else {
-                    tr.push("-/-");
-                    tr.push("-/-");
-                }
-            }
-        });
-        tr.push(d.total);
-        tr.push(d.coms);
-        rows.push(tr);
+		} else {
+		    tr.push("-/-");
+		    tr.push("-/-");
+		}
+	    }
+	});
+	tr.push(d.total);
+	tr.push(d.coms);
+	rows.push(tr);
     }
 
     var doc = new jsPDF({ orientation : 'l', unit : 'pt', format : 'a4' });
     doc.text("ColoCalc - " + obj._("_Summary"), 40, 30);
     doc.text(new Date().toDateString(), 40, 50);
     doc.autoTable(Globalcolumns, Globalrows, {
-        styles : {
-                   cellPadding : 8, // a number, array or object (see margin below)
-                   fontSize : 16,
-                   halign : 'left',
-                   overflow : 'linebreak', // visible, hidden, ellipsize or linebreak // left, center, right
-                 },
-        showHeader : 'firstPage',
-        theme : 'grid',
-        tableWidth : "auto",
-        startY : 120,
-        margin : 120
+	styles : {
+	           cellPadding : 8, // a number, array or object (see margin below)
+	           fontSize : 16,
+	           halign : 'left',
+	           overflow : 'linebreak', // visible, hidden, ellipsize or linebreak // left, center, right
+	         },
+	showHeader : 'firstPage',
+	theme : 'grid',
+	tableWidth : "auto",
+	startY : 120,
+	margin : 120
 
     });
     doc.addPage();
@@ -107,22 +156,22 @@ Coloc.prototype.buildPdf = function(callback = null)
     doc.text(new Date().toDateString(), 40, 50);
     let i = 1;
     doc.autoTable(columns, rows, {
-        styles : {
-                   cellPadding : 4, // a number, array or object (see margin below)
-                   fontSize : 7,
-                   halign : 'left',
-                   overflow : 'linebreak', // visible, hidden, ellipsize or linebreak // left, center, right
-                 },
-        showHeader : 'firstPage',
-        theme : 'grid',
-        tableWidth : "auto",
-        startY : 60,
-        margin : 20,
-        addPageContent : function(data) {
-            doc.setFontSize(7);
-            doc.text("Page :" + i, 780, 585);
-            i = i + 1;
-        }
+	styles : {
+	           cellPadding : 4, // a number, array or object (see margin below)
+	           fontSize : 7,
+	           halign : 'left',
+	           overflow : 'linebreak', // visible, hidden, ellipsize or linebreak // left, center, right
+	         },
+	showHeader : 'firstPage',
+	theme : 'grid',
+	tableWidth : "auto",
+	startY : 60,
+	margin : 20,
+	addPageContent : function(data) {
+	    doc.setFontSize(7);
+	    doc.text("Page :" + i, 780, 585);
+	    i = i + 1;
+	}
 
     });
 
@@ -133,7 +182,7 @@ Coloc.prototype.buildStyles = function() {
     let obj = this;
     obj.Styles = Array();
     for(let i = 0; i < obj.types.length; i++) {
-        obj.Styles[obj.types[i]] = "St-" + (i % 7);
+	obj.Styles[obj.types[i]] = "St-" + (i % 7);
     }
 
 };
@@ -141,9 +190,9 @@ Coloc.prototype.buildStyles = function() {
 Coloc.prototype._ = function(index) {
 
     if(this.langArray[index])
-        return this.langArray[index];
+	return this.langArray[index];
     else
-        return index;
+	return index;
 };
 
 Coloc.prototype.initDir = function() {
@@ -151,61 +200,54 @@ Coloc.prototype.initDir = function() {
     let coloc = this;
 
     try {
-        let s = coloc.fs.accessSync(coloc.USERDATA, coloc.fs.F_OK);
+	let s = coloc.fs.accessSync(coloc.USERDATA, coloc.fs.F_OK);
     } catch(e) {
 
-        coloc.fs.mkdir(coloc.USERDATA);
-        coloc.fs.mkdir(coloc.database_dir);
-        coloc.fs.mkdir(coloc.config_dir);
+	coloc.fs.mkdir(coloc.USERDATA);
+	coloc.fs.mkdir(coloc.users_dir);
 
-        coloc.fs.writeFileSync(coloc.DB_NAME, JSON.stringify(new Array()), "UTF-8");
-        coloc.fs.writeFileSync(
-            coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English", "COLOR_ROWS": false}', "UTF-8");
+	coloc.fs.writeFileSync(coloc.DB_NAME, JSON.stringify(new Array()), "UTF-8");
+	coloc.fs.writeFileSync(
+	    coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English", "COLOR_ROWS": false}', "UTF-8");
     }
 
     try {
-        coloc.fs.accessSync(coloc.database_dir, coloc.fs.F_OK);
+	coloc.fs.accessSync(coloc.users_dir, coloc.fs.F_OK);
     } catch(e) {
-        coloc.fs.mkdir(coloc.database_dir);
-        coloc.fs.writeFileSync(coloc.DB_NAME);
+	coloc.fs.mkdir(coloc.users_dir);
+	coloc.fs.writeFileSync(coloc.DB_NAME);
+	coloc.fs.writeFileSync(
+	    coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English", "COLOR_ROWS": false}', "UTF-8");
     }
 
     try {
-        coloc.fs.accessSync(coloc.config_dir, coloc.fs.F_OK);
+	coloc.fs.accessSync(coloc.DB_NAME, coloc.fs.F_OK);
     } catch(e) {
-        coloc.fs.mkdir(coloc.config_dir);
-        coloc.fs.writeFileSync(
-            coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English", "COLOR_ROWS": false}', "UTF-8");
+	coloc.fs.writeFileSync(coloc.DB_NAME, JSON.stringify(new Array()), "UTF-8");
     }
 
     try {
-        coloc.fs.accessSync(coloc.DB_NAME, coloc.fs.F_OK);
+	coloc.fs.accessSync(coloc.CFG, coloc.fs.F_OK);
     } catch(e) {
-        coloc.fs.writeFileSync(coloc.DB_NAME, JSON.stringify(new Array()), "UTF-8");
-    }
-
-    try {
-        coloc.fs.accessSync(coloc.CFG, coloc.fs.F_OK);
-    } catch(e) {
-        coloc.fs.writeFileSync(
-            coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English", "COLOR_ROWS": false}', "UTF-8");
+	coloc.fs.writeFileSync(
+	    coloc.CFG, '{ "USERS" : [], "TYPES" : [] ,"LANG":"English", "COLOR_ROWS": false}', "UTF-8");
     }
 
 };
 
 Coloc.prototype.resetDB = function() {
 
-    this.database = new Array();
-
-    this.refresh();
+    this.fs.unlinkSync(this.DB_NAME);
+    this.fs.unlinkSync(this.CFG);
+    top.location = top.location;
 
 };
 
 Coloc.prototype.resetCredit = function() {
     let inst = this;
     $(inst.database).each(function() {
-        let elem = this.users;
-        $(inst.users).each(function() { elem[this].realPayed = elem[this].part; });
+	let elem = this.users;
+	$(inst.users).each(function() { elem[this].realPayed = elem[this].part; });
 
     });
     this.refresh();
@@ -280,13 +322,13 @@ Coloc.prototype.buildDepotForm = function() {
     tb = $("<tbody>");
     $(this.users).each(function() {
 
-        elem = '<tr>' +
-               '<td><i class="fa fa-user"></i>  ' + this + ' </td>' +
-               '<td>' +
-               '<input class="form-check-input participate" type="checkbox" id="' + this + '">' +
-               '</td>' +
-               '</tr>';
-        $(tb).append(elem);
+	elem = '<tr>' +
+	       '<td><i class="fa fa-user"></i>  ' + this + ' </td>' +
+	       '<td>' +
+	       '<input class="form-check-input participate" type="checkbox" id="' + this + '">' +
+	       '</td>' +
+	       '</tr>';
+	$(tb).append(elem);
 
     });
 
@@ -358,20 +400,20 @@ Coloc.prototype.buildAddForm = function() {
     tb = $("<tbody>");
     $(this.users).each(function() {
 
-        elem = '<tr>' +
-               '<td><i class="fa fa-user"></i>  ' + this + ' </td>' +
-               '<td>' +
-               '<input class="form-check-input participate" type="checkbox" id="' + this + '">' +
-               '</td>' +
-               '<td>' +
-               '<input class="form-check-input payed" type="checkbox" id="' + this + '">' +
-               '</td>' +
-               '<td>' +
-               '<input class="form-control realPayed" style="width: 90%;display:inline" value="0" type="number" id="' +
-               this + '"> <i class="fa fa-eur"></i>  ' +
-               '</td>' +
-               '</tr>';
-        $(tb).append(elem);
+	elem = '<tr>' +
+	       '<td><i class="fa fa-user"></i>  ' + this + ' </td>' +
+	       '<td>' +
+	       '<input class="form-check-input participate" type="checkbox" id="' + this + '">' +
+	       '</td>' +
+	       '<td>' +
+	       '<input class="form-check-input payed" type="checkbox" id="' + this + '">' +
+	       '</td>' +
+	       '<td>' +
+	       '<input class="form-control realPayed" style="width: 90%;display:inline" value="0" type="number" id="' +
+	       this + '"> <i class="fa fa-eur"></i>  ' +
+	       '</td>' +
+	       '</tr>';
+	$(tb).append(elem);
 
     });
 
@@ -412,12 +454,12 @@ Coloc.prototype.buildConfigForm = function() {
         this.fs.readdirSync(coloc.LANG_DIR).filter(file => this.fs.lstatSync(this.LANG_DIR + "/" + file).isFile());
 
     for(let i in langs) {
-        let lang = langs[i].replace(".json", "");
-        elem += "<option value='" + lang + "' ";
-        if(lang === coloc.lang) {
-            elem += " selected";
-        }
-        elem += ">" + lang + "</option>";
+	let lang = langs[i].replace(".json", "");
+	elem += "<option value='" + lang + "' ";
+	if(lang === coloc.lang) {
+	    elem += " selected";
+	}
+	elem += ">" + lang + "</option>";
     }
     elem += "</select></div></div>";
 
@@ -430,13 +472,13 @@ Coloc.prototype.buildConfigForm = function() {
            '<div class="col-sm-9 btn-group" data-toggle="buttons">' +
            '<label class="btn btn-default ';
     if(coloc.colorRows === true) {
-        elem += ' active'
+	elem += ' active'
     }
     elem += '" id="colorrows">' +
             '<input type="checkbox" autocomplete="off" ';
 
     if(coloc.colorRows === true) {
-        elem += ' checked';
+	elem += ' checked';
     }
     elem += '>' +
             '<i class="toggle-yes fa fa-check"></i>' +
@@ -451,11 +493,11 @@ Coloc.prototype.buildConfigForm = function() {
            '</div>' +
            '<div class="col-sm-9">';
     $(this.types).each(function(key, value) {
-        elem += '<div class="form-group row">';
-        elem += '<div class="col-sm-9"><input type="text" value="' + value + '" class="form-control type"></div>';
-        elem +=
-            '<div class="col-sm-3"><bouton class="btn btn-danger" onclick="$(this).parent().parent().remove()"><i class="fa fa-trash-o"></i></bouton></div>';
-        elem += '</div>'
+	elem += '<div class="form-group row">';
+	elem += '<div class="col-sm-9"><input type="text" value="' + value + '" class="form-control type"></div>';
+	elem +=
+	    '<div class="col-sm-3"><bouton class="btn btn-danger" onclick="$(this).parent().parent().remove()"><i class="fa fa-trash-o"></i></bouton></div>';
+	elem += '</div>'
     });
     elem += '<div class="row">';
     elem += '<div class="col-sm-12"><bouton class="btn btn-success" id="addType"><i class="fa fa-plus"></i> ' +
@@ -469,11 +511,11 @@ Coloc.prototype.buildConfigForm = function() {
            '</div>' +
            '<div class="col-sm-9 container-fluid">';
     $(this.users).each(function(key, value) {
-        elem += '<div class="form-group row">';
-        elem += '<div class="col-sm-9"><input type="text" value="' + value + '" class="form-control user"></div>';
-        elem +=
-            '<div class="col-sm-3"><bouton class="btn btn-danger" onclick="$(this).parent().parent().remove()"><i class="fa fa-trash-o"></i></bouton></div>';
-        elem += '</div>'
+	elem += '<div class="form-group row">';
+	elem += '<div class="col-sm-9"><input type="text" value="' + value + '" class="form-control user"></div>';
+	elem +=
+	    '<div class="col-sm-3"><bouton class="btn btn-danger" onclick="$(this).parent().parent().remove()"><i class="fa fa-trash-o"></i></bouton></div>';
+	elem += '</div>'
     });
     elem += '<div class="row">';
     elem += '<div class="col-sm-12"><bouton class="btn btn-success" id="addUser"><i class="fa fa-plus"></i>  ' +
@@ -501,11 +543,13 @@ Coloc.prototype.bindWindow = function() {
     $(".table").css({ "margin" : "0" });
 
     $(window).on("resize", function() {
-        let WindowHeight = window.innerHeight;
-        let diff = $("nav").outerHeight(true) + $(".panel-heading").outerHeight(true) + 25;
-        let Max = WindowHeight - diff;
+	let WindowHeight = window.innerHeight;
+	let diff = $("nav").outerHeight(true);
+	diff += $("#HistoryLabel").outerHeight(true);
+	diff += 25;
+	let Max = WindowHeight - diff;
 
-        $(".fitHeight").css({ "height" : Max })
+	$(".fitHeight").css({ "height" : Max })
 
     });
     $(window).resize();
@@ -518,60 +562,60 @@ Coloc.prototype.bindDepotForm = function() {
     let u = this.users;
     let modal = this.modal;
     $(modal).find("#from").unbind("change").change(function() {
-        let nbUsers = $(modal).find(".participate:checked").length;
-        part = $(modal).find("#total").val() / nbUsers;
-        part = part.toFixed(2);
-        $(modal).find(".participate").removeAttr("disabled");
-        $(modal).find(".participate").prop("checked", true);
-        $(modal).find(".participate#" + $(modal).find("#from").val()).prop("checked", false);
-        $(modal).find(".participate#" + $(modal).find("#from").val()).attr("disabled", true);
+	let nbUsers = $(modal).find(".participate:checked").length;
+	part = $(modal).find("#total").val() / nbUsers;
+	part = part.toFixed(2);
+	$(modal).find(".participate").removeAttr("disabled");
+	$(modal).find(".participate").prop("checked", true);
+	$(modal).find(".participate#" + $(modal).find("#from").val()).prop("checked", false);
+	$(modal).find(".participate#" + $(modal).find("#from").val()).attr("disabled", true);
 
     });
 
     $(modal).find("#close").unbind("click").click(function() {
-        inst.refresh();
-        inst.closeModal();
+	inst.refresh();
+	inst.closeModal();
     });
 
     $(modal).find("#delete").unbind("click").click(function() {
-        let id = $(modal).find("#id").val();
-        inst.database.splice(id, 1);
-        inst.refresh();
-        inst.closeModal();
+	let id = $(modal).find("#id").val();
+	inst.database.splice(id, 1);
+	inst.refresh();
+	inst.closeModal();
     });
 
     $(modal).find("#save").unbind("click").click(function() {
-        let id = $(modal).find("#id").val();
-        let from = $(modal).find("#from").val();
-        let total = $(modal).find("#total").val();
-        let date = $(modal).find("#date").val();
-        let coms = $(modal).find("#coms").val();
-        let userPart = (total / $(modal).find(".participate:checked").length).toFixed(2);
-        let users = {};
+	let id = $(modal).find("#id").val();
+	let from = $(modal).find("#from").val();
+	let total = $(modal).find("#total").val();
+	let date = $(modal).find("#date").val();
+	let coms = $(modal).find("#coms").val();
+	let userPart = (total / $(modal).find(".participate:checked").length).toFixed(2);
+	let users = {};
 
-        $(u).each(function() {
-            let v;
-            if(this == from) {
-                v = { participate : false, payed : true, realPayed : total, part : 0 };
-            } else {
-                v = {
-                    participate : $(modal).find('#' + this + ".participate").is(":checked"),
-                    payed : false,
-                    realPayed : 0,
-                    part : $(modal).find('#' + this + ".participate").is(":checked") == true ? userPart : 0
-                };
-            }
-            users[this] = v;
+	$(u).each(function() {
+	    let v;
+	    if(this == from) {
+		v = { participate : false, payed : true, realPayed : total, part : 0 };
+	    } else {
+		v = {
+		    participate : $(modal).find('#' + this + ".participate").is(":checked"),
+		    payed : false,
+		    realPayed : 0,
+		    part : $(modal).find('#' + this + ".participate").is(":checked") == true ? userPart : 0
+		};
+	    }
+	    users[this] = v;
 
-        });
+	});
 
-        if(id >= 0) {
-            inst.replaceRow(id, "Depot", total, date, coms, users);
-        } else {
-            inst.insertRow("Depot", total, date, coms, users);
-        }
-        inst.refresh();
-        inst.closeModal();
+	if(id >= 0) {
+	    inst.replaceRow(id, "Depot", total, date, coms, users);
+	} else {
+	    inst.insertRow("Depot", total, date, coms, users);
+	}
+	inst.refresh();
+	inst.closeModal();
 
     });
 };
@@ -581,84 +625,84 @@ Coloc.prototype.bindAddForm = function() {
     let u = this.users;
     let modal = this.modal;
     $(modal).find(".payed").unbind("change").change(function() {
-        let nbUsers = $(modal).find(".participate:checked").length;
-        part = $(modal).find("#total").val() / nbUsers;
-        part = part.toFixed(2);
-        $(modal).find(".payed").each(function(){ $(modal).find("#" + this.id + ".realPayed").val(0) });
-        $(modal).find(".payed:checked").each(function(){ $(modal).find("#" + this.id + ".realPayed").val(part) });
+	let nbUsers = $(modal).find(".participate:checked").length;
+	part = $(modal).find("#total").val() / nbUsers;
+	part = part.toFixed(2);
+	$(modal).find(".payed").each(function(){ $(modal).find("#" + this.id + ".realPayed").val(0) });
+	$(modal).find(".payed:checked").each(function(){ $(modal).find("#" + this.id + ".realPayed").val(part) });
 
     });
 
     $(modal).find("#type").unbind("change").change(function() {
-        if($(this).val() == "Depot") {
-            $(modal).find(".payed").parent().hide();
-            $(modal).find(".realPayed").parent().hide();
+	if($(this).val() == "Depot") {
+	    $(modal).find(".payed").parent().hide();
+	    $(modal).find(".realPayed").parent().hide();
 
-        } else {
-            $(modal).find(".payed").parent().show();
-            $(modal).find(".realPayed").parent().show();
-        }
+	} else {
+	    $(modal).find(".payed").parent().show();
+	    $(modal).find(".realPayed").parent().show();
+	}
 
     });
 
     $(modal).find("#total").unbind("change").change(function() {
-        let nbUsers = $(modal).find(".participate:checked").length;
-        part = $(modal).find("#total").val() / nbUsers;
-        part = part.toFixed(2);
-        $(modal).find(".participate:checked").each(function(){ $(modal).find("#" + this.id + "_realPayed").val(part) });
+	let nbUsers = $(modal).find(".participate:checked").length;
+	part = $(modal).find("#total").val() / nbUsers;
+	part = part.toFixed(2);
+	$(modal).find(".participate:checked").each(function(){ $(modal).find("#" + this.id + "_realPayed").val(part) });
     });
 
     $(modal).find("#close").unbind("click").click(function() {
-        inst.refresh();
-        inst.closeModal();
+	inst.refresh();
+	inst.closeModal();
     });
 
     $(modal).find("#delete").unbind("click").click(function() {
-        let id = $(modal).find("#id").val();
-        inst.database.splice(id, 1);
-        inst.refresh();
-        inst.closeModal();
+	let id = $(modal).find("#id").val();
+	inst.database.splice(id, 1);
+	inst.refresh();
+	inst.closeModal();
 
     });
 
     $(modal).find("#save").unbind("click").click(function() {
-        let id = $(modal).find("#id").val();
-        let type = $(modal).find("#type").val();
-        let total = $(modal).find("#total").val();
-        let date = $(modal).find("#date").val();
-        let coms = $(modal).find("#coms").val();
-        let userPart = (total / $(modal).find(".participate:checked").length).toFixed(2);
-        let users = {};
-        if(type != "Depot") {
-            $(u).each(function() {
-                let v = {
-                    participate : $(modal).find('#' + this + ".participate").is(":checked"),
-                    payed : $(modal).find('#' + this + ".payed").is(":checked"),
-                    realPayed : $(modal).find('#' + this + ".realPayed").val(),
-                    part : $(modal).find('#' + this + ".participate").is(":checked") == true ? userPart : 0
-                };
-                users[this] = v;
-            });
-        } else {
-            $(u).each(function() {
+	let id = $(modal).find("#id").val();
+	let type = $(modal).find("#type").val();
+	let total = $(modal).find("#total").val();
+	let date = $(modal).find("#date").val();
+	let coms = $(modal).find("#coms").val();
+	let userPart = (total / $(modal).find(".participate:checked").length).toFixed(2);
+	let users = {};
+	if(type != "Depot") {
+	    $(u).each(function() {
+		let v = {
+		    participate : $(modal).find('#' + this + ".participate").is(":checked"),
+		    payed : $(modal).find('#' + this + ".payed").is(":checked"),
+		    realPayed : $(modal).find('#' + this + ".realPayed").val(),
+		    part : $(modal).find('#' + this + ".participate").is(":checked") == true ? userPart : 0
+		};
+		users[this] = v;
+	    });
+	} else {
+	    $(u).each(function() {
 
-                let v = {
-                    participate : $(modal).find('#' + this + ".participate").is(":checked"),
-                    payed : true,
-                    realPayed : $(modal).find('#' + this + ".participate").is(":checked") == true ? total : -userPart,
-                    part : 0
-                };
-                users[this] = v;
-            });
-        }
+		let v = {
+		    participate : $(modal).find('#' + this + ".participate").is(":checked"),
+		    payed : true,
+		    realPayed : $(modal).find('#' + this + ".participate").is(":checked") == true ? total : -userPart,
+		    part : 0
+		};
+		users[this] = v;
+	    });
+	}
 
-        if(id >= 0) {
-            inst.replaceRow(id, type, total, date, coms, users);
-        } else {
-            inst.insertRow(type, total, date, coms, users);
-        }
-        inst.refresh();
-        inst.closeModal();
+	if(id >= 0) {
+	    inst.replaceRow(id, type, total, date, coms, users);
+	} else {
+	    inst.insertRow(type, total, date, coms, users);
+	}
+	inst.refresh();
+	inst.closeModal();
 
     });
 };
@@ -668,42 +712,42 @@ Coloc.prototype.bindConfigForm = function() {
     let u = this.users;
     let modal = this.modal;
     $(modal).find("#addType").unbind("click").click(function() {
-        elem = '<div class="form-group row">';
-        elem += '<div class="col-sm-9"><input type="text" value="" class="form-control type"></div>';
-        elem +=
-            '<div class="col-sm-3"><bouton class="btn btn-danger" onclick="$(this).parent().parent().remove()"><i class="fa fa-trash-o"></i></bouton></div>';
-        elem += '</div>';
-        $(this).parent().parent().parent().prepend(elem);
+	elem = '<div class="form-group row">';
+	elem += '<div class="col-sm-9"><input type="text" value="" class="form-control type"></div>';
+	elem +=
+	    '<div class="col-sm-3"><bouton class="btn btn-danger" onclick="$(this).parent().parent().remove()"><i class="fa fa-trash-o"></i></bouton></div>';
+	elem += '</div>';
+	$(this).parent().parent().parent().prepend(elem);
     });
 
     $(modal).find("#addUser").unbind("click").click(function() {
-        elem = '<div class="form-group row">';
-        elem += '<div class="col-sm-9"><input type="text" value="" class="form-control user"></div>';
-        elem +=
-            '<div class="col-sm-3"><bouton class="btn btn-danger" onclick="$(this).parent().parent().remove()"><i class="fa fa-trash-o"></i></bouton></div>';
-        elem += '</div>';
-        $(this).parent().parent().parent().prepend(elem);
+	elem = '<div class="form-group row">';
+	elem += '<div class="col-sm-9"><input type="text" value="" class="form-control user"></div>';
+	elem +=
+	    '<div class="col-sm-3"><bouton class="btn btn-danger" onclick="$(this).parent().parent().remove()"><i class="fa fa-trash-o"></i></bouton></div>';
+	elem += '</div>';
+	$(this).parent().parent().parent().prepend(elem);
     });
     $(modal).find("#resetDb").unbind("click").click(function() {
-        inst.resetDB();
-        inst.closeModal();
+	inst.resetDB();
+	inst.closeModal();
     });
     $(modal).find("#save").unbind("click").click(function() {
-        inst.users = Array();
-        $(modal).find(".user").each(function() { inst.users.push($(this).val()); });
-        inst.types = Array();
-        $(modal).find(".type").each(function() { inst.types.push($(this).val()); });
+	inst.users = Array();
+	$(modal).find(".user").each(function() { inst.users.push($(this).val()); });
+	inst.types = Array();
+	$(modal).find(".type").each(function() { inst.types.push($(this).val()); });
 
-        inst.lang = $(modal).find("#lang").val();
-        inst.colorRows = $(modal).find("#colorrows").hasClass("active");
-        inst.refresh();
-        inst.closeModal();
+	inst.lang = $(modal).find("#lang").val();
+	inst.colorRows = $(modal).find("#colorrows").hasClass("active");
+	inst.refresh();
+	inst.closeModal();
 
     });
 
     $(modal).find("#close").unbind("click").click(function() {
-        inst.refresh();
-        inst.closeModal();
+	inst.refresh();
+	inst.closeModal();
     });
 
 };
@@ -711,8 +755,8 @@ Coloc.prototype.bindConfigForm = function() {
 Coloc.prototype.bindList = function() {
     let obj = this;
     $(this.list.tb).find("tr").unbind("dblclick").on("dblclick", function() {
-        id = $(this).find(".id").html();
-        obj.ShowInfo(id);
+	id = $(this).find(".id").html();
+	obj.ShowInfo(id);
 
     });
 
@@ -729,14 +773,14 @@ Coloc.prototype.EditPanel = function(id) {
 
     let data = this.database[id];
     if(data.type == "Depot") {
-        this.buildDepotForm();
-        this.bindDepotForm();
-        this.loadDepotEditData(id);
+	this.buildDepotForm();
+	this.bindDepotForm();
+	this.loadDepotEditData(id);
 
     } else {
-        this.buildAddForm();
-        this.bindAddForm();
-        this.loadAddEditData(id);
+	this.buildAddForm();
+	this.bindAddForm();
+	this.loadAddEditData(id);
     }
 
     this.showModal();
@@ -799,11 +843,11 @@ Coloc.prototype.loadAddEditData = function(id) {
     $(this.modal).find("#id").val(id);
     $(this.modal).find("#delete").show();
     $(this.users).each(function() {
-        if(data.users[this] && data.users[this].participate) {
-            $(inst.modal).find(".participate#" + this).prop('checked', data.users[this].participate);
-            $(inst.modal).find(".payed#" + this).prop('checked', data.users[this].payed);
-            $(inst.modal).find(".realPayed#" + this).show().val(data.users[this].realPayed);
-        }
+	if(data.users[this] && data.users[this].participate) {
+	    $(inst.modal).find(".participate#" + this).prop('checked', data.users[this].participate);
+	    $(inst.modal).find(".payed#" + this).prop('checked', data.users[this].payed);
+	    $(inst.modal).find(".realPayed#" + this).show().val(data.users[this].realPayed);
+	}
     });
 
 };
@@ -819,12 +863,12 @@ Coloc.prototype.loadDepotEditData = function(id) {
     $(this.modal).find("#delete").show();
 
     $(this.users).each(function() {
-        if(data.users[this]) {
-            $(inst.modal).find("#" + this).prop('checked', data.users[this].participate);
-            if(data.users[this].payed) {
-                who = this;
-            }
-        }
+	if(data.users[this]) {
+	    $(inst.modal).find("#" + this).prop('checked', data.users[this].participate);
+	    if(data.users[this].payed) {
+		who = this;
+	    }
+	}
 
     });
 
@@ -839,17 +883,17 @@ Coloc.prototype.recalculate = function() {
     let c = Array();
 
     $(this.users).each(function() {
-        let uLambda = this;
-        let part = 0;
-        let realPayed = 0;
-        $(d).each(function() {
-            if(this.users[uLambda]) {
-                part += Number(this.users[uLambda].part);
-                realPayed += Number(this.users[uLambda].realPayed);
-            }
-        });
+	let uLambda = this;
+	let part = 0;
+	let realPayed = 0;
+	$(d).each(function() {
+	    if(this.users[uLambda]) {
+		part += Number(this.users[uLambda].part);
+		realPayed += Number(this.users[uLambda].realPayed);
+	    }
+	});
 
-        c[uLambda] = (realPayed - part).toFixed(2);
+	c[uLambda] = (realPayed - part).toFixed(2);
 
     });
     this.credits = c;
@@ -860,13 +904,13 @@ Coloc.prototype.closeModal = function(callback) {
 
     $(this.modal).modal("hide");
     $(this.modal).unbind('hidden.bs.modal').on('hidden.bs.modal', () => {
-        $(this.modal).find("#title").empty();
-        $(this.modal).find(".modal-body").empty();
-        $(this.modal).find(".modal-footer").children().hide();
-        try {
-            callback();
-        } catch(e) {
-        }
+	$(this.modal).find("#title").empty();
+	$(this.modal).find(".modal-body").empty();
+	$(this.modal).find(".modal-footer").children().hide();
+	try {
+	    callback();
+	} catch(e) {
+	}
     });
 
 };
@@ -874,11 +918,11 @@ Coloc.prototype.closeModal = function(callback) {
 Coloc.prototype.showModal = function(callback) {
     $(this.modal).modal("show");
     $(this.modal).unbind('shown.bs.modal').on('shown.bs.modal', () => {
-        $(window).resize();
-        try {
-            callback();
-        } catch(e) {
-        }
+	$(window).resize();
+	try {
+	    callback();
+	} catch(e) {
+	}
     });
 };
 
@@ -887,18 +931,18 @@ Coloc.prototype.loadCredits = function() {
     $(this.creditsPanel).empty();
     $(this.users).each(function() {
 
-        let elem = '<tr>' +
-                   '<td><i class="fa fa-user"></i> ' + this + '</td>';
+	let elem = '<tr>' +
+	           '<td><i class="fa fa-user"></i> ' + this + '</td>';
 
-        if(inst.credits[this] >= 0) {
-            elem += '<td class="text-success">+' + inst.credits[this];
-        } else {
-            elem += '<td class="text-danger">' + inst.credits[this]
-        }
+	if(inst.credits[this] >= 0) {
+	    elem += '<td class="text-success">+' + inst.credits[this];
+	} else {
+	    elem += '<td class="text-danger">' + inst.credits[this]
+	}
 
-        elem += ' </td>' +
-                '</tr>';
-        $(inst.creditsPanel).append(elem);
+	elem += ' </td>' +
+	        '</tr>';
+	$(inst.creditsPanel).append(elem);
     });
 
 };
@@ -907,31 +951,31 @@ Coloc.prototype.readData = function() {
     let contenu;
 
     try {
-        contenu = this.fs.readFileSync(this.DB_NAME, "UTF-8");
-        this.database = JSON.parse(contenu);
+	contenu = this.fs.readFileSync(this.DB_NAME, "UTF-8");
+	this.database = JSON.parse(contenu);
     } catch(e) {
-        this.database = new Array();
+	this.database = new Array();
     }
 
     try {
-        contenu = this.fs.readFileSync(this.CFG, "UTF-8");
-        let json = JSON.parse(contenu);
-        this.users = json.USERS;
-        this.types = json.TYPES;
-        this.lang = json.LANG;
-        this.colorRows = json.COLOR_ROWS;
+	contenu = this.fs.readFileSync(this.CFG, "UTF-8");
+	let json = JSON.parse(contenu);
+	this.users = json.USERS;
+	this.types = json.TYPES;
+	this.lang = json.LANG;
+	this.colorRows = json.COLOR_ROWS;
     } catch(e) {
-        this.users = new Array();
-        this.types = new Array();
-        this.lang = "English";
-        this.colorRows = false;
+	this.users = new Array();
+	this.types = new Array();
+	this.lang = "English";
+	this.colorRows = false;
     }
 
     try {
-        contenu = this.fs.readFileSync(this.LANG_DIR + "/" + this.lang + ".json", "UTF-8");
-        this.langArray = JSON.parse(contenu);
+	contenu = this.fs.readFileSync(this.LANG_DIR + "/" + this.lang + ".json", "UTF-8");
+	this.langArray = JSON.parse(contenu);
     } catch(e) {
-        this.langArray = new Array();
+	this.langArray = new Array();
     }
 
 };
@@ -1000,22 +1044,22 @@ Coloc.prototype.BuildInfo = function(id) {
     tb = $("<tbody>");
     $(this.users).each(function() {
 
-        if(!d.users[this] || (d.users[this] && !d.users[this].participate)) {
-        } else {
+	if(!d.users[this] || (d.users[this] && !d.users[this].participate)) {
+	} else {
 
-            row = $("<tr>");
-            $(row).append("<td>" + this + "</td>");
+	    row = $("<tr>");
+	    $(row).append("<td>" + this + "</td>");
 
-            if(d.users[this].part || d.users[this].realPayed) {
-                $(row).append("<td>" + d.users[this].part + "</td>");
-                $(row).append("<td>" + d.users[this].realPayed + "</td>");
+	    if(d.users[this].part || d.users[this].realPayed) {
+		$(row).append("<td>" + d.users[this].part + "</td>");
+		$(row).append("<td>" + d.users[this].realPayed + "</td>");
 
-            } else {
-                $(row).append("<td>-/-</td>");
-                $(row).append("<td>-/-</td>");
-            }
-            $(tb).append(row);
-        }
+	    } else {
+		$(row).append("<td>-/-</td>");
+		$(row).append("<td>-/-</td>");
+	    }
+	    $(tb).append(row);
+	}
     });
     $(elem).append(th);
     $(elem).append(tb);
@@ -1026,7 +1070,7 @@ Coloc.prototype.BindInfo = function(id) {
     let coloc = this;
     $(this.modal).find("#edit").unbind().bind("click", () => {
 
-        coloc.closeModal(() => { coloc.EditPanel(id); });
+	coloc.closeModal(() => { coloc.EditPanel(id); });
 
     });
     $(this.modal).find("#close").unbind().bind("click", () => { coloc.closeModal(); });
@@ -1037,23 +1081,23 @@ Coloc.prototype.loadList = function() {
     $(obj.list.tb).empty();
     this.buildList();
     $(this.database).each(function(index, value) {
-        let d = value;
-        let row = $("<tr>");
-        $(row).append("<th class='id' scope='row'>" + index + "</th>");
-        $(row).append("<td>" + d.date + "</td>");
-        $(row).append("<td>" + d.type + "</td>");
-        $(row).append("<td>" + d.coms + "</td>");
+	let d = value;
+	let row = $("<tr>");
+	$(row).append("<th class='id' scope='row'>" + index + "</th>");
+	$(row).append("<td>" + d.date + "</td>");
+	$(row).append("<td>" + d.type + "</td>");
+	$(row).append("<td>" + d.coms + "</td>");
 
-        if(obj.colorRows === true) {
-            $(row).addClass(obj.Styles[d.type]);
-        }
-        if(d.total) {
-            $(row).append("<td>" + d.total + "</td>");
-        } else {
-            $(row).append("<td>-/-</td>");
-        }
+	if(obj.colorRows === true) {
+	    $(row).addClass(obj.Styles[d.type]);
+	}
+	if(d.total) {
+	    $(row).append("<td>" + d.total + "</td>");
+	} else {
+	    $(row).append("<td>-/-</td>");
+	}
 
-        $(obj.list.tb).append(row);
+	$(obj.list.tb).append(row);
     });
 
 };
@@ -1061,20 +1105,20 @@ Coloc.prototype.loadList = function() {
 Coloc.prototype.calcuateMounthTotal = function() {
 
     let mouth = this.database.filter((e) => {
-        let dateObj = new Date(e.date);
-        let curDate = new Date();
-        let e_mounth = dateObj.getUTCMonth() + 1; // months from 1-12
-        let e_year = dateObj.getUTCFullYear();
-        let c_mounth = curDate.getUTCMonth() + 1; // months from 1-12
-        let c_year = curDate.getUTCFullYear();
+	let dateObj = new Date(e.date);
+	let curDate = new Date();
+	let e_mounth = dateObj.getUTCMonth() + 1; // months from 1-12
+	let e_year = dateObj.getUTCFullYear();
+	let c_mounth = curDate.getUTCMonth() + 1; // months from 1-12
+	let c_year = curDate.getUTCFullYear();
 
-        return (c_mounth == e_mounth && c_year == e_year);
+	return (c_mounth == e_mounth && c_year == e_year);
     });
 
     let somme = 0;
 
     for(let e in mouth) {
-        somme += Number(mouth[e].total);
+	somme += Number(mouth[e].total);
     }
     $("#MounthTotal").html(somme + ' <i class="fa fa-eur"></i>');
 

@@ -35,7 +35,7 @@ app.on('ready', function() {
     mainWindow.loadURL('file://' + global.APP_DIR + '/index.html');
 
     mainWindow.once("ready-to-show", function() { mainWindow.show(); });
-    // mainWindow.openDevTools();
+    //mainWindow.openDevTools();
 
     mainWindow.on('closed', function() { mainWindow = null; });
 });

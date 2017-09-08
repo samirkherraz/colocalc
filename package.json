@@ -2,7 +2,7 @@
   "name": "ColoCalc",
   "description": "Une application pour mieux gérer vos dépenses entre colocataires",
   "author": "Samir KHERRAZ <samir.kherraz@outlook.fr>",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "repository": "https://github.com/samirkherraz/colocalc",
   "keywords": [
     "Colocataires",
