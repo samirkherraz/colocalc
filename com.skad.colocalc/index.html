@@ -1,14 +1,14 @@
-<!doctype HTML> 
+<!doctype HTML>
 <html>
 
 <head>
   <meta charset="utf-8">
   <style>
- body{
-   background: #eee;
-   }
+    body {
+      background: #eee;
+    }
 
-.Loading{
+    .Loading {
       position: fixed;
       width: 100%;
       top: 0px;
@@ -16,33 +16,36 @@
       height: 100%;
       background-color: #333;
       z-index: 10000;
-  }
-  .loading-bar{
+    }
+
+    .loading-bar {
       text-align: left;
       font-size: 10px;
       margin: 0px;
-      width: 2px;  
+      width: 2px;
       height: 15px;
       border-radius: 0px 0px 3px 3px;
       background-color: #337ab7;
-      background-image: -webkit-linear-gradient(#337ab7,#115895);
+      background-image: -webkit-linear-gradient(#337ab7, #115895);
+    }
 
-  }
-  .loading-bar-parent{
+    .loading-bar-parent {
       display: block;
       position: fixed;
       top: 30%;
       margin-left: 20%;
       margin-right: 20%;
       left: 0px;
-      width: 60%;  
+      width: 60%;
       border-radius: 5px;
       padding: 0px;
       background-color: #ccc;
-  }
-  .loading-brand{ 
+    }
+
+    .loading-brand {
       font-size: 120px;
-  }
+    }
+
      :not(input):not(textarea),
      :not(input):not(textarea)::after,
      :not(input):not(textarea)::before {
@@ -51,47 +54,49 @@
       cursor: default;
     }
 
-  .St-1{
-    background-color: #DA70D6;
-  }
+    .St-1 {
+      background-color: #DA70D6;
+    }
 
- .St-2{
-    background-color: #EED2EE;
-  }
+    .St-2 {
+      background-color: #EED2EE;
+    }
 
- .St-3{
-    background-color: #B0C4DE;
-  }
+    .St-3 {
+      background-color: #B0C4DE;
+    }
 
- .St-4{
-    background-color: #838B8B;
-  }
+    .St-4 {
+      background-color: #838B8B;
+    }
 
- .St-5{
-    background-color: #EEE685;
-  }
+    .St-5 {
+      background-color: #EEE685;
+    }
 
- .St-6{
-    background-color: #CDBA96;
-  }
+    .St-6 {
+      background-color: #CDBA96;
+    }
 
- .St-0{
-    background-color: #EECBAD;
-  }
-  .btn i.toggle-yes {  
-    display: none;
-  }
-  .btn.active i.toggle-yes {
-    display: block;
-  }
+    .St-0 {
+      background-color: #EECBAD;
+    }
 
-  .btn i.toggle-no {  
-    display: block;
-  }
-  .btn.active i.toggle-no {
-    display: none;
-  }
+    .btn i.toggle-yes {
+      display: none;
+    }
 
+    .btn.active i.toggle-yes {
+      display: block;
+    }
+
+    .btn i.toggle-no {
+      display: block;
+    }
+
+    .btn.active i.toggle-no {
+      display: none;
+    }
   </style>
 
   <link rel="stylesheet" type="text/css" href="./css/font-awesome.min.css">
@@ -101,91 +106,91 @@
 
 <body>
 
-<div class="Loading" id="UserSelect">
-<div class="loading-bar-parent" style="text-align: center">
-<div class="loading-brand"><i aria-hidden="true" class="fa fa-user"></i></div>
+  <div class="Loading" id="UserSelect">
+    <div class="loading-bar-parent" style="text-align: center">
+      <div class="loading-brand"><i aria-hidden="true" class="fa fa-user"></i></div>
 
 
 
 
 
-<ul class="nav nav-tabs">
-  <li class="active"><a id="BTNSelectUser" data-toggle="tab" href="#select">Select user</a></li>
-  <li><a id="BTNCreateUser" data-toggle="tab" href="#create">Create user</a></li>
-</ul>
+      <ul class="nav nav-tabs">
+        <li class="active"><a id="BTNSelectUser" data-toggle="tab" href="#select">Select user</a></li>
+        <li><a id="BTNCreateUser" data-toggle="tab" href="#create">Create user</a></li>
+      </ul>
 
-<div class="tab-content" >
-<div class="alert alert-danger" style="display: none;" id="ConnectError"></div>
-  <div id="select" class="tab-pane fade in active">
-    <select class="form-control" id="user">
-</select>
-<button class="btn btn-success form-control" id="Connect" >Connect</button>
+      <div class="tab-content">
+        <div class="alert alert-danger" style="display: none;" id="ConnectError"></div>
+        <div id="select" class="tab-pane fade in active">
+          <select class="form-control" id="user"></select>
+          <button class="btn btn-success form-control" id="Connect">Connect</button>
+        </div>
+        <div id="create" class="tab-pane fade">
+          <div class="alert alert-danger" style="display: none;" id="CreateError"></div>
+          <input class="form-control" type="text" id="user_new">
+          <button class="btn btn-success form-control" id="Create">Create</button>
+
+        </div>
+      </div>
+
+
+
+
+    </div>
   </div>
-  <div id="create" class="tab-pane fade">
-  <div class="alert alert-danger" style="display: none;"  id="CreateError"></div>
-    <input class="form-control"  type="text" id="user_new">
-<button class="btn btn-success form-control" id="Create" >Create</button>
 
+  <div id="Loading" class="Loading">
+    <div id="loading-bar-parent" class="loading-bar-parent" style="opacity: 0.5; text-align: center">
+      <div id="loading-brand" class="loading-brand"><i aria-hidden="true" class="fa fa-money"></i></div>
+      <div>
+        <h2>ColoCalc</h2></div>
+      <div id="loading-bar" class="loading-bar">
+      </div>
+    </div>
   </div>
-</div>
 
 
 
 
-</div>
-</div>
-
-<div id="Loading" class="Loading">
-<div id="loading-bar-parent" class="loading-bar-parent" style="opacity: 0.5; text-align: center">
-<div id="loading-brand" class="loading-brand"><i aria-hidden="true" class="fa fa-money"></i></div>
-<div><h2>ColoCalc</h2></div>
-<div id="loading-bar" class="loading-bar">
-</div>
-</div>
-</div>
-
-
-
-
-<nav class="navbar navbar-inverse navbar-static-top" role="navigation">
-            <div class="container">
-                <!-- Brand and toggle get grouped for better mobile display -->
-                <div class="navbar-header page-scroll">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#menu_collapse">
+  <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+    <div class="container">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="navbar-header page-scroll">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#menu_collapse">
                       <span class="sr-only">Toggle navigation</span>
                       <span class="icon-bar"></span>
                       <span class="icon-bar"></span>
                       <span class="icon-bar"></span>
                     </button>
 
-                    <a class="navbar-brand btn" id="username" href="javascript://" onclick="top.location=top.location">
+        <a class="navbar-brand btn" id="username" href="javascript://" onclick="top.location=top.location">
                       <i aria-hidden="true" class="fa fa-money"></i> ColoCalc
                     </a>
-                 
-                </div>
-                <!-- Collect the nav links, forms, and other content for toggling -->
-                <div class="collapse navbar-collapse" id="menu_collapse">
 
-                    <ul class="nav navbar-nav navbar-right">
-                       <li><a  id="BTNAdd" class="btn" href="javascript://" onclick="c.AddPanel()"><i aria-hidden="true" class="fa fa-plus"></i> Add</a></li>
-                       <li><a  id="BTNDeposit" class="btn" href="javascript://" onclick="c.DepotPanel()"><i aria-hidden="true" class="fa fa-plus"></i> Déposer</a></li>
-                       <li><a  id="BTNConfig" class="btn" href="javascript://" onclick="c.ConfigPanel()"><i aria-hidden="true" class="fa fa-wrench"></i> Configuration</a></li>
-                       <li><a  id="BTNPdf" class="btn" href="javascript://" onclick="c.buildPdf()"><i aria-hidden="true" class="fa fa-pdf"></i> Éxporter en PDF</a></li>
-                    </ul>
-                </div>
-                <!-- /.navbar-collapse -->
-            </div>
-            <!-- /.container-fluid --> 
-        </nav>
+      </div>
+      <!-- Collect the nav links, forms, and other content for toggling -->
+      <div class="collapse navbar-collapse" id="menu_collapse">
+
+        <ul class="nav navbar-nav navbar-right">
+          <li><a id="BTNAdd" class="btn" href="javascript://" onclick="c.AddPanel()"><i aria-hidden="true" class="fa fa-plus"></i> Add</a></li>
+          <li><a id="BTNDeposit" class="btn" href="javascript://" onclick="c.DepotPanel()"><i aria-hidden="true" class="fa fa-plus"></i> Déposer</a></li>
+          <li><a id="BTNConfig" class="btn" href="javascript://" onclick="c.ConfigPanel()"><i aria-hidden="true" class="fa fa-wrench"></i> Configuration</a></li>
+          <li><a id="BTNPdf" class="btn" href="javascript://" onclick="c.buildPdf()"><i aria-hidden="true" class="fa fa-pdf"></i> Éxporter en PDF</a></li>
+        </ul>
+      </div>
+      <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container-fluid -->
+  </nav>
 
 
 
 
   <div class="container-fluid" id="body">
-  
-    <div class="row" >
+
+    <div class="row">
       <div class="col-sm-8">
-        <div class="panel panel-default " >
+        <div class="panel panel-default ">
           <div class="panel-heading" id="HistoryLabel">History</div>
           <div class="panel-body fitHeight fitCss">
             <table class="small  table-condensed table table-hover">
@@ -198,7 +203,7 @@
 
       </div>
       <div class="col-sm-4 ">
-        
+
         <div class="panel panel-primary">
           <div class="panel-heading" id="TotalLabel">Total</div>
           <div class="panel-body fitCss">
@@ -211,7 +216,7 @@
         <div class="panel panel-primary">
           <div class="panel-heading" id="TotalMounthLabel">Total</div>
           <div class="panel-body">
-              <h4 style="text-align: center" id="MounthTotal"></h4>
+            <h4 style="text-align: center" id="MounthTotal"></h4>
           </div>
         </div>
 
@@ -240,7 +245,7 @@
           <div class="modal-footer">
             <button type="button" style="display: none" class="btn btn-success" id="edit"><i aria-hidden="true" class="fa fa-edit"></i>  Edit</button>
             <button type="button" style="display: none" class="btn btn-danger" id="delete"><i aria-hidden="true" class="fa fa-trash-o"></i>  Delete</button>
-            <button type="button" style="display: none" class="btn btn-success" id="save" ><i aria-hidden="true" class="fa fa-floppy-o"></i>  Save</button>
+            <button type="button" style="display: none" class="btn btn-success" id="save"><i aria-hidden="true" class="fa fa-floppy-o"></i>  Save</button>
             <button type="button" style="display: none" class="btn btn-default" id="close"><i aria-hidden="true" class="fa fa-times"></i>  Close</button>
           </div>
         </div>
@@ -251,19 +256,19 @@
 </body>
 
 </html>
-<script src="./js/head.js"></script>    
+<script src="./js/head.js"></script>
 <script>
-    var c;
+  var c;
 
-    load(()=>{
+  load(() => {
     $(document).ready(function() {
-        $("#loading-bar-parent").animate({"opacity":1},100,function(){
-                c = new Coloc(function() {
-                $("#Loading").fadeOut();
-              });
+      $("#loading-bar-parent").animate({
+        "opacity": 1
+      }, 100, function() {
+        c = new Coloc(function() {
+          $("#Loading").fadeOut();
         });
+      });
     });
-});
+  });
 </script>
-
-
